@@ -203,6 +203,18 @@ DlgPrefWaveform::DlgPrefWaveform(
             QOverload<int>::of(&QSpinBox::valueChanged),
             beatGridAlphaSlider,
             &QSlider::setValue);
+    connect(showBarMarkersCheckBox,
+            &QCheckBox::toggled,
+            this,
+            [](bool checked) {
+                WaveformWidgetFactory::instance()->setShowBarMarkers(checked);
+            });
+    connect(showPhraseMarkersCheckBox,
+            &QCheckBox::toggled,
+            this,
+            [](bool checked) {
+                WaveformWidgetFactory::instance()->setShowPhraseMarkers(checked);
+            });
 
     connect(useWaveformCheckBox,
             &QCheckBox::clicked,
@@ -403,6 +415,8 @@ void DlgPrefWaveform::slotUpdate() {
     playMarkerPositionSlider->setValue(static_cast<int>(pFactory->getPlayMarkerPosition() * 100));
     beatGridAlphaSpinBox->setValue(pFactory->getBeatGridAlpha());
     beatGridAlphaSlider->setValue(pFactory->getBeatGridAlpha());
+    showBarMarkersCheckBox->setChecked(pFactory->showBarMarkers());
+    showPhraseMarkersCheckBox->setChecked(pFactory->showPhraseMarkers());
 
     untilMarkShowBeatsCheckBox->setChecked(pFactory->getUntilMarkShowBeats());
     untilMarkShowTimeCheckBox->setChecked(pFactory->getUntilMarkShowTime());
@@ -525,6 +539,9 @@ void DlgPrefWaveform::slotResetToDefaults() {
     // Beat grid alpha default is 90
     beatGridAlphaSlider->setValue(90);
     beatGridAlphaSpinBox->setValue(90);
+
+    showBarMarkersCheckBox->setChecked(true);
+    showPhraseMarkersCheckBox->setChecked(true);
 
     // 50 (center) is default
     playMarkerPositionSlider->setValue(50);
@@ -706,6 +723,8 @@ void DlgPrefWaveform::updateWaveformGeneralOptionsEnabled() {
     endOfTrackWarningTimeSpinBox->setEnabled(enabled);
     beatGridAlphaSlider->setEnabled(enabled);
     beatGridAlphaSpinBox->setEnabled(enabled);
+    showBarMarkersCheckBox->setEnabled(enabled);
+    showPhraseMarkersCheckBox->setEnabled(enabled);
     playMarkerPositionSlider->setEnabled(enabled);
     defaultZoomComboBox->setEnabled(enabled);
     synchronizeZoomCheckBox->setEnabled(enabled);

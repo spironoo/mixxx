@@ -1143,6 +1143,10 @@ WBeatSpinBox,
 #PositionGutter {
   margin-right: 4px;
 }
+#PhaseMeterGutter {
+  qproperty-layoutAlignment: 'AlignRight | AlignVCenter';
+  padding: 2px 6px 2px 2px;
+}
 #PositionGutterSmall {
   qproperty-layoutAlignment: 'AlignLeft | AlignTop';
   padding: 0px 6px 2px 3px;

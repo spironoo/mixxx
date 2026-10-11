@@ -1739,6 +1739,7 @@ add_library(
   src/waveform/renderers/waveformmarkset.cpp
   src/waveform/renderers/waveformoverviewrenderer.cpp
   src/waveform/renderers/waveformrenderbackground.cpp
+  src/waveform/renderers/waveformbarmarkers.cpp
   src/waveform/renderers/waveformrenderbeat.cpp
   src/waveform/renderers/waveformrendererabstract.cpp
   src/waveform/renderers/waveformrendererendoftrack.cpp
@@ -1823,6 +1824,7 @@ add_library(
   src/widget/wnumberpos.cpp
   src/widget/wnumberrate.cpp
   src/widget/woverview.cpp
+  src/widget/wphasemeter.cpp
   src/widget/wpixmapstore.cpp
   src/widget/wplaybutton.cpp
   src/widget/wpushbutton.cpp
@@ -2928,6 +2930,7 @@ if(BUILD_TESTING)
     src/test/analyzersilence_test.cpp
     src/test/audiotaperpot_test.cpp
     src/test/autodjprocessor_test.cpp
+    src/test/barstest.cpp
     src/test/beatgridtest.cpp
     src/test/beatmaptest.cpp
     src/test/beatstest.cpp

@@ -90,6 +90,9 @@ const ConfigKey kFrameRateKey =
         ConfigKey(kWaveformGroup, QStringLiteral("FrameRate"));
 const ConfigKey kVSyncKey = ConfigKey(kWaveformGroup, QStringLiteral("VSync"));
 const ConfigKey kBeatGridAlpha = ConfigKey(kWaveformGroup, QStringLiteral("beatGridAlpha"));
+const ConfigKey kShowBarMarkersKey = ConfigKey(kWaveformGroup, QStringLiteral("ShowBarMarkers"));
+const ConfigKey kShowPhraseMarkersKey =
+        ConfigKey(kWaveformGroup, QStringLiteral("ShowPhraseMarkers"));
 
 ConfigKey visualGainKey(int index) {
     return ConfigKey(kWaveformGroup, QStringLiteral("VisualGain_") + QString::number(index));
@@ -146,6 +149,8 @@ WaveformWidgetFactory::WaveformWidgetFactory()
           m_openGlesAvailable(false),
           m_openGLShaderAvailable(false),
           m_beatGridAlpha(90),
+          m_showBarMarkers(true),
+          m_showPhraseMarkers(true),
           m_vsyncThread(nullptr),
           m_pGuiTick(nullptr),
           m_pVisualsManager(nullptr),
@@ -422,6 +427,9 @@ bool WaveformWidgetFactory::setConfig(UserSettingsPointer config) {
 
     int beatGridAlpha = m_config->getValue(kBeatGridAlpha, m_beatGridAlpha);
     setDisplayBeatGridAlpha(beatGridAlpha);
+
+    setShowBarMarkers(m_config->getValue(kShowBarMarkersKey, m_showBarMarkers));
+    setShowPhraseMarkers(m_config->getValue(kShowPhraseMarkersKey, m_showPhraseMarkers));
 
     WaveformWidgetType::Type type = static_cast<WaveformWidgetType::Type>(
             m_config->getValueString(kWaveformTypeKey).toInt(&ok));
@@ -782,6 +790,20 @@ void WaveformWidgetFactory::setDisplayBeatGridAlpha(int alpha) {
 
     for (const auto& holder : std::as_const(m_waveformWidgetHolders)) {
         holder.m_waveformWidget->setDisplayBeatGridAlpha(m_beatGridAlpha);
+    }
+}
+
+void WaveformWidgetFactory::setShowBarMarkers(bool show) {
+    m_showBarMarkers = show;
+    if (m_config) {
+        m_config->setValue(kShowBarMarkersKey, show);
+    }
+}
+
+void WaveformWidgetFactory::setShowPhraseMarkers(bool show) {
+    m_showPhraseMarkers = show;
+    if (m_config) {
+        m_config->setValue(kShowPhraseMarkersKey, show);
     }
 }
 

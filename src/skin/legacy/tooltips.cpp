@@ -478,7 +478,7 @@ void Tooltips::addStandardTooltips() {
 
     add("beats_translate_curpos")
             << tr("Adjust Beatgrid")
-            << QString("%1: %2").arg(leftClick, tr("Adjust beatgrid so the closest beat is aligned with the current play position."))
+            << QString("%1: %2").arg(leftClick, tr("Adjust beatgrid so the closest beat is aligned with the current play position, and make it the first beat of a bar and of a phrase."))
             << QString("%1: %2").arg(rightClick, tr("Adjust beatgrid to match another playing deck."));
 
     add("beats_translate_match_alignment")
@@ -488,6 +488,24 @@ void Tooltips::addStandardTooltips() {
     add("beats_undo_adjustment")
             << tr("Revert last BPM/Beatgrid Change")
             << tr("Revert last BPM/Beatgrid Change of the loaded track.");
+
+    add("downbeat_set")
+            << tr("Set Downbeat")
+            << tr("Make the beat closest to the play position the first beat of "
+                  "a bar and of a phrase.");
+
+    add("downbeat_move")
+            << tr("Move Bar Markers")
+            << QString("%1: %2").arg(leftClick, tr("Move the bar and phrase markers one beat later."))
+            << QString("%1: %2").arg(rightClick, tr("Move the bar and phrase markers one beat earlier."));
+
+    add("phase_meter")
+            << tr("Phase Meter")
+            << tr("Shows the position in the current bar (one segment per beat) "
+                  "and phrase (one dot per bar).")
+            << tr("The marker and ring show the position of the sync leader, or "
+                  "of another playing deck. They turn green when the bars are "
+                  "aligned.");
 
     add("bpmlock")
             << tr("Toggle the BPM/beatgrid lock")

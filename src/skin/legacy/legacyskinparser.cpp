@@ -64,6 +64,7 @@
 #include "widget/wnumberpos.h"
 #include "widget/wnumberrate.h"
 #include "widget/woverview.h"
+#include "widget/wphasemeter.h"
 #include "widget/wpixmapstore.h"
 #include "widget/wplaybutton.h"
 #include "widget/wpushbutton.h"
@@ -571,6 +572,8 @@ QList<QWidget*> LegacySkinParser::parseNode(const QDomElement& node) {
         result = wrapWidget(parseStarRating(node));
     } else if (nodeName == "VuMeter") {
         result = wrapWidget(parseVuMeter(node));
+    } else if (nodeName == "PhaseMeter") {
+        result = wrapWidget(parsePhaseMeter(node));
     } else if (nodeName == "StatusLight") {
         result = wrapWidget(parseStandardWidget<WStatusLight>(node));
     } else if (nodeName == "Display") {
@@ -1386,6 +1389,18 @@ QWidget* LegacySkinParser::parseBeatSpinBox(const QDomElement& node) {
     pSpinbox->setup(node, *m_pContext);
 
     return pSpinbox;
+}
+
+QWidget* LegacySkinParser::parsePhaseMeter(const QDomElement& node) {
+    const QString group = lookupNodeGroup(node);
+    if (group.isEmpty()) {
+        SKIN_WARNING(node, *m_pContext, QStringLiteral("PhaseMeter requires a Group or Channel"));
+        return nullptr;
+    }
+    WPhaseMeter* pPhaseMeter = new WPhaseMeter(m_pParent, group);
+    commonWidgetSetup(node, pPhaseMeter, true);
+    pPhaseMeter->setup(node, *m_pContext);
+    return pPhaseMeter;
 }
 
 QWidget* LegacySkinParser::parseBattery(const QDomElement& node) {

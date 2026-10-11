@@ -168,6 +168,23 @@
                       </Template>
 
                       <Template src="skin:left_right_1state_button_optional.xml">
+                        <SetVariable name="TooltipId">downbeat_set</SetVariable>
+                        <SetVariable name="ObjectName">DownbeatSetButton</SetVariable>
+                        <SetVariable name="state_0_pressed">icon/ic_downbeat_set_48px.svg</SetVariable>
+                        <SetVariable name="state_0_unpressed">icon/ic_downbeat_set_48px.svg</SetVariable>
+                        <SetVariable name="left_connection_control"><Variable name="group"/>,downbeat_set</SetVariable>
+                      </Template>
+
+                      <Template src="skin:left_right_1state_button_optional.xml">
+                        <SetVariable name="TooltipId">downbeat_move</SetVariable>
+                        <SetVariable name="ObjectName">DownbeatMoveButton</SetVariable>
+                        <SetVariable name="state_0_pressed">icon/ic_downbeat_move_48px.svg</SetVariable>
+                        <SetVariable name="state_0_unpressed">icon/ic_downbeat_move_48px.svg</SetVariable>
+                        <SetVariable name="left_connection_control"><Variable name="group"/>,downbeat_move_later</SetVariable>
+                        <SetVariable name="right_connection_control"><Variable name="group"/>,downbeat_move_earlier</SetVariable>
+                      </Template>
+
+                      <Template src="skin:left_right_1state_button_optional.xml">
                         <SetVariable name="TooltipId">tempo_tap_bpm_tap</SetVariable>
                         <SetVariable name="ObjectName">BeatsTranslateCurposButton</SetVariable>
                         <SetVariable name="MinimumSize">44,22</SetVariable>
@@ -363,6 +380,33 @@
                         </Children>
                         <Connection>
                           <ConfigKey>[Skin],show_starrating</ConfigKey>
+                          <BindProperty>visible</BindProperty>
+                        </Connection>
+                      </WidgetGroup>
+
+                      <WidgetGroup>
+                        <ObjectName>PhaseMeterGutter</ObjectName>
+                        <Layout>horizontal</Layout>
+                        <SizePolicy>min,min</SizePolicy>
+                        <Children>
+                          <PhaseMeter>
+                            <ObjectName>PhaseMeter</ObjectName>
+                            <TooltipId>phase_meter</TooltipId>
+                            <Size>80f,14f</Size>
+                            <Group><Variable name="group"/></Group>
+                            <SegmentColor>#3f3f3f</SegmentColor>
+                            <BeatColor>#d2d2d2</BeatColor>
+                            <DownbeatColor>#ff6f00</DownbeatColor>
+                            <ReferenceColor>#2196f3</ReferenceColor>
+                            <InPhaseColor>#64dd17</InPhaseColor>
+                            <Connection>
+                              <ConfigKey><Variable name="group"/>,track_loaded</ConfigKey>
+                              <BindProperty>visible</BindProperty>
+                            </Connection>
+                          </PhaseMeter>
+                        </Children>
+                        <Connection>
+                          <ConfigKey>[Skin],show_phase_meter</ConfigKey>
                           <BindProperty>visible</BindProperty>
                         </Connection>
                       </WidgetGroup>

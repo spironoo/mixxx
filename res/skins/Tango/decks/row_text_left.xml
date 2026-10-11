@@ -84,6 +84,8 @@ Variables:
             <Channel><Variable name="chanNum"/></Channel>
           </TrackProperty>
 
+          <Template src="skins:Tango/decks/phase_meter.xml"/>
+
           <TrackProperty>
             <ObjectName>Duration</ObjectName>
             <Size>60min,21f</Size>

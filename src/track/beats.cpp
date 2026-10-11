@@ -291,9 +291,13 @@ mixxx::BeatsPointer Beats::fromBeatGridByteArray(
     track::io::BeatGrid grid;
     audio::FramePos position;
     Bpm bpm;
+    std::optional<int> downbeatIndex;
     if (grid.ParseFromArray(byteArray.constData(), byteArray.size())) {
         position = audio::FramePos(grid.first_beat().frame_position());
         bpm = Bpm(grid.bpm().bpm());
+        if (grid.has_downbeat_index()) {
+            downbeatIndex = grid.downbeat_index();
+        }
     } else if (byteArray.size() == sizeof(BeatGridV1Data)) {
         // Legacy fallback for BeatGrid-1.0
         const auto* pBlob = reinterpret_cast<const BeatGridV1Data*>(byteArray.constData());
@@ -302,7 +306,11 @@ mixxx::BeatsPointer Beats::fromBeatGridByteArray(
     }
 
     if (position.isValid() && bpm.isValid()) {
-        return fromConstTempo(sampleRate, position, bpm, subVersion);
+        auto pBeats = fromConstTempo(sampleRate, position, bpm, subVersion);
+        if (pBeats && downbeatIndex) {
+            pBeats = pBeats->trySetDownbeatIndex(downbeatIndex).value_or(pBeats);
+        }
+        return pBeats;
     }
 
     // Failed to parse the beatgrid.
@@ -335,7 +343,13 @@ BeatsPointer Beats::fromBeatMapByteArray(
         return nullptr;
     }
 
-    return fromBeatPositions(sampleRate, beatPositions, subVersion);
+    auto pBeats = fromBeatPositions(sampleRate, beatPositions, subVersion);
+    if (pBeats && map.has_downbeat_index()) {
+        // The first serialized beat is the first marker, so the index refers
+        // to the same beat after deserialization.
+        pBeats = pBeats->trySetDownbeatIndex(map.downbeat_index()).value_or(pBeats);
+    }
+    return pBeats;
 }
 
 QByteArray Beats::toByteArray() const {
@@ -354,6 +368,9 @@ QByteArray Beats::toBeatGridByteArray() const {
             static_cast<google::protobuf::int32>(
                     m_lastMarkerPosition.toLowerFrameBoundary().value()));
     grid.mutable_bpm()->set_bpm(m_lastMarkerBpm.value());
+    if (m_downbeatIndex) {
+        grid.set_downbeat_index(*m_downbeatIndex);
+    }
 
     std::string output;
     grid.SerializeToString(&output);
@@ -367,6 +384,9 @@ QByteArray Beats::toBeatMapByteArray() const {
         track::io::Beat beat;
         beat.set_frame_position(static_cast<google::protobuf::int32>(position.value()));
         map.add_beat()->CopyFrom(beat);
+    }
+    if (m_downbeatIndex) {
+        map.set_downbeat_index(*m_downbeatIndex);
     }
 
     std::string output;
@@ -632,11 +652,14 @@ std::optional<BeatsPointer> Beats::tryTranslate(audio::FrameDiff_t offsetFrames)
             });
 
     const auto lastMarkerPosition = m_lastMarkerPosition + offsetFrames;
+    // Beat indices are relative to the first marker, so bars move together
+    // with the beats.
     return BeatsPointer(new Beats(markers,
             lastMarkerPosition.toLowerFrameBoundary(),
             m_lastMarkerBpm,
             m_sampleRate,
-            m_subVersion));
+            m_subVersion,
+            m_downbeatIndex));
 }
 
 std::optional<BeatsPointer> Beats::tryTranslateBeats(double xBeats) const {
@@ -650,7 +673,8 @@ std::optional<BeatsPointer> Beats::tryTranslateBeats(double xBeats) const {
             lastMarkerPosition.toLowerFrameBoundary(),
             m_lastMarkerBpm,
             m_sampleRate,
-            m_subVersion));
+            m_subVersion,
+            m_downbeatIndex));
 }
 
 std::optional<BeatsPointer> Beats::tryScale(BpmScale scale) const {
@@ -702,16 +726,72 @@ std::optional<BeatsPointer> Beats::tryScale(BpmScale scale) const {
 
     Bpm lastMarkerBpm = m_lastMarkerBpm * scaleFactor;
 
+    // The marker positions are kept, so the beat at index i is now at index
+    // i * scaleFactor. Keep the downbeat at (or as close as possible to) its
+    // previous position.
+    std::optional<int> downbeatIndex;
+    if (m_downbeatIndex) {
+        downbeatIndex = static_cast<int>(std::lround(*m_downbeatIndex * scaleFactor));
+    }
+
     return BeatsPointer(new Beats(markers,
             m_lastMarkerPosition,
             lastMarkerBpm,
             m_sampleRate,
-            m_subVersion));
+            m_subVersion,
+            downbeatIndex));
 }
 
 std::optional<BeatsPointer> Beats::trySetBpm(mixxx::Bpm bpm) const {
     const auto it = cfirstmarker();
-    return BeatsPointer(new Beats({}, *it, bpm, m_sampleRate, m_subVersion));
+    std::optional<int> downbeatIndex;
+    if (m_downbeatIndex && bpm.isValid()) {
+        // Keep the downbeat on the new beat that is closest to its previous
+        // position. The first marker is kept as the anchor of the new grid.
+        const audio::FramePos downbeatPosition = *(cfirstmarker() + *m_downbeatIndex);
+        const audio::FrameDiff_t beatLengthFrames = 60.0 * m_sampleRate / bpm.value();
+        downbeatIndex = static_cast<int>(
+                std::lround((downbeatPosition - *it) / beatLengthFrames));
+    }
+    return BeatsPointer(new Beats({}, *it, bpm, m_sampleRate, m_subVersion, downbeatIndex));
+}
+
+std::optional<BeatsPointer> Beats::trySetDownbeatIndex(std::optional<int> downbeatIndex) const {
+    return BeatsPointer(new Beats(m_markers,
+            m_lastMarkerPosition,
+            m_lastMarkerBpm,
+            m_sampleRate,
+            m_subVersion,
+            downbeatIndex));
+}
+
+std::optional<int> Beats::findClosestBeatIndex(audio::FramePos position) const {
+    if (!position.isValid() || !isValid()) {
+        return std::nullopt;
+    }
+    auto it = iteratorFrom(position);
+    if (it == cbegin() || it == cend()) {
+        return std::nullopt;
+    }
+    // `it` points to the first beat at or after `position`.
+    const auto prevIt = std::prev(it);
+    if (prevIt != cbegin() && position - *prevIt < *it - position) {
+        it = prevIt;
+    }
+    return beatIndexOf(it);
+}
+
+int Beats::resolveDownbeatIndex(audio::FramePos fallbackPosition) const {
+    if (m_downbeatIndex) {
+        return *m_downbeatIndex;
+    }
+    if (fallbackPosition.isValid()) {
+        const auto closestBeatIndex = findClosestBeatIndex(fallbackPosition);
+        if (closestBeatIndex) {
+            return *closestBeatIndex;
+        }
+    }
+    return 0;
 }
 
 bool Beats::isValid() const {

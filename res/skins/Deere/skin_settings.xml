@@ -107,6 +107,12 @@
           </Template>
 
           <Template src="skins:Deere/skinsettings_button.xml">
+            <SetVariable name="TooltipId">phase_meter</SetVariable>
+            <SetVariable name="text">Phase Meter</SetVariable>
+            <SetVariable name="skinsetting">[Skin],show_phase_meter</SetVariable>
+          </Template>
+
+          <Template src="skins:Deere/skinsettings_button.xml">
             <SetVariable name="TooltipId"></SetVariable>
             <SetVariable name="text">8 Hotcues</SetVariable>
             <SetVariable name="skinsetting">[Skin],show_8_hotcues</SetVariable>

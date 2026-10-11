@@ -96,6 +96,7 @@
                   </TrackProperty>
                 </Children>
               </WidgetGroup>
+              <Template src="skins:LateNight/decks/phase_meter.xml"/>
               <WidgetGroup>
                 <ObjectName>AlignRight</ObjectName>
                 <Layout>horizontal</Layout>

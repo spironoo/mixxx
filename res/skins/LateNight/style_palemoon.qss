@@ -2753,6 +2753,18 @@ WPushButton#PlayDeck[value="0"] {
     #HotcuesLater[pressed="true"] {
       image: url(skins:LateNight/palemoon/buttons/btn__beats_hotcues_later_active.svg) no-repeat center center;
     }
+  #DownbeatSet {
+    image: url(skins:LateNight/palemoon/buttons/btn__downbeat_set.svg) no-repeat center center;
+    }
+    #DownbeatSet[pressed="true"] {
+      image: url(skins:LateNight/palemoon/buttons/btn__downbeat_set_active.svg) no-repeat center center;
+    }
+  #BarsMove {
+    image: url(skins:LateNight/palemoon/buttons/btn__bars_move.svg) no-repeat center center;
+    }
+    #BarsMove[pressed="true"] {
+      image: url(skins:LateNight/palemoon/buttons/btn__bars_move_active.svg) no-repeat center center;
+    }
 
 #MicTalk[displayValue="0"] {
   image: url(skins:LateNight/palemoon/buttons/btn__mic_talk.svg) no-repeat center center;

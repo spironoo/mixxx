@@ -63,6 +63,7 @@
       <attribute persist="true" config_key="[Skin],show_rate_controls">1</attribute>
       <attribute persist="true" config_key="[Skin],show_rate_control_buttons">1</attribute>
       <attribute persist="true" config_key="[Skin],show_beatgrid_controls">1</attribute>
+      <attribute persist="true" config_key="[Skin],show_phase_meter">1</attribute>
       <!-- Compact deck -->
       <attribute persist="true" config_key="[Skin],show_rate_controls_compact">1</attribute>
       <attribute persist="true" config_key="[Skin],show_loop_controls_compact">1</attribute>
@@ -198,6 +199,11 @@
 
       <SetVariable name="AxesColor">#999</SetVariable>
       <SetVariable name="BeatColor">#999</SetVariable>
+      <SetVariable name="PhaseMeterSegmentColor">#3a3a39</SetVariable>
+      <SetVariable name="PhaseMeterBeatColor">#b3a593</SetVariable>
+      <SetVariable name="PhaseMeterDownbeatColor">#ff7a01</SetVariable>
+      <SetVariable name="PhaseMeterReferenceColor">#00c6ff</SetVariable>
+      <SetVariable name="PhaseMeterInPhaseColor">#3fbf4f</SetVariable>
       <SetVariable name="PlayPosColor">#00c6ff</SetVariable>
       <SetVariable name="CueColor">#ff7a01</SetVariable>
       <SetVariable name="LoopColor">#00b400</SetVariable>
@@ -333,6 +339,11 @@
       <SetVariable name="SignalLowColor">red</SetVariable>
       <SetVariable name="AxesColor">#ffffff</SetVariable>
       <SetVariable name="BeatColor">#ffffff</SetVariable>
+      <SetVariable name="PhaseMeterSegmentColor">#333333</SetVariable>
+      <SetVariable name="PhaseMeterBeatColor">#cccccc</SetVariable>
+      <SetVariable name="PhaseMeterDownbeatColor">#ff001c</SetVariable>
+      <SetVariable name="PhaseMeterReferenceColor">#00c8ff</SetVariable>
+      <SetVariable name="PhaseMeterInPhaseColor">#00ff00</SetVariable>
       <SetVariable name="PlayPosColor">#00c8ff</SetVariable>
       <SetVariable name="CueColor">#ff001c</SetVariable>
       <SetVariable name="LoopColor">#00ff00</SetVariable>

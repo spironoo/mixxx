@@ -239,6 +239,17 @@ class WaveformWidgetFactory : public QObject,
     void setDisplayBeatGridAlpha(int alpha);
     int getBeatGridAlpha() const { return m_beatGridAlpha; }
 
+    /// Highlight the first beat of each bar in the beat grid
+    void setShowBarMarkers(bool show);
+    bool showBarMarkers() const {
+        return m_showBarMarkers;
+    }
+    /// Highlight the first beat of each phrase in the beat grid
+    void setShowPhraseMarkers(bool show);
+    bool showPhraseMarkers() const {
+        return m_showPhraseMarkers;
+    }
+
     void setVisualGain(BandIndex index, double gain);
     double getVisualGain(BandIndex index) const;
     static double getVisualGainDefault(BandIndex index);
@@ -387,6 +398,8 @@ class WaveformWidgetFactory : public QObject,
     QString m_openGLVersion;
     bool m_openGLShaderAvailable;
     int m_beatGridAlpha;
+    bool m_showBarMarkers;
+    bool m_showPhraseMarkers;
 
     VSyncThread* m_vsyncThread;
     GuiTick* m_pGuiTick;  // not owned

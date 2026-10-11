@@ -149,6 +149,11 @@ Description:
             <SetVariable name="Setting">[Tango],trackComment</SetVariable>
           </Template>
 
+          <Template src="skins:Tango/controls/skin_settings_button_2state.xml">
+            <SetVariable name="text">Phase Meter</SetVariable>
+            <SetVariable name="Setting">[Skin],show_phase_meter</SetVariable>
+          </Template>
+
           <WidgetGroup><!-- Permanent deck controls -->
             <ObjectName>DeckIndicatorSettings</ObjectName>
             <Layout>vertical</Layout>

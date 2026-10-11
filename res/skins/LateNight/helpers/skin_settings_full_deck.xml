@@ -78,6 +78,13 @@ Description:
         <SetVariable name="Setting">[Skin],show_beatjump_controls</SetVariable>
       </Template>
 
+      <!-- Phase Meter -->
+      <Template src="skins:LateNight/helpers/skin_settings_button_2state.xml">
+        <SetVariable name="TooltipId">phase_meter</SetVariable>
+        <SetVariable name="Text">Phase Meter</SetVariable>
+        <SetVariable name="Setting">[Skin],show_phase_meter</SetVariable>
+      </Template>
+
       <WidgetGroup><Size>0me,5f</Size></WidgetGroup>
 
       <!-- Rate Controls -->

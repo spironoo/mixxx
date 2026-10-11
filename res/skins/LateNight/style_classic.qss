@@ -2093,6 +2093,12 @@ WPushButton#BpmLockToggle[value="1"] {
     #HotcuesLater {
       image: url(skins:LateNight/classic/buttons/btn__beats_hotcues_later.svg) no-repeat center center;
     }
+    #DownbeatSet {
+      image: url(skins:LateNight/classic/buttons/btn__downbeat_set.svg) no-repeat center center;
+    }
+    #BarsMove {
+      image: url(skins:LateNight/classic/buttons/btn__bars_move.svg) no-repeat center center;
+    }
 
 #MicTalk {
   image: url(skins:LateNight/classic/buttons/btn__mic_talk.svg) no-repeat center center;

@@ -126,6 +126,22 @@
                                 <SizePolicy>me,me</SizePolicy>
                                 <Elide>right</Elide>
                               </TrackProperty>
+                              <WidgetGroup><Size>4f,1min</Size></WidgetGroup>
+                              <PhaseMeter>
+                                <TooltipId>phase_meter</TooltipId>
+                                <Size>64f,16f</Size>
+                                <Group><Variable name="group"/></Group>
+                                <SegmentColor>#b1bbc5</SegmentColor>
+                                <BeatColor>#191f24</BeatColor>
+                                <DownbeatColor>#c0392b</DownbeatColor>
+                                <ReferenceColor>#0066cc</ReferenceColor>
+                                <InPhaseColor>#1e8e3e</InPhaseColor>
+                                <Connection>
+                                  <ConfigKey><Variable name="group"/>,track_loaded</ConfigKey>
+                                  <BindProperty>visible</BindProperty>
+                                </Connection>
+                              </PhaseMeter>
+                              <WidgetGroup><Size>6f,1min</Size></WidgetGroup>
                               <NumberPos>
                                 <TooltipId>track_time</TooltipId>
                                 <Style>QLabel {

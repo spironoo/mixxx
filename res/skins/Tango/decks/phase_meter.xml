@@ -1,0 +1,43 @@
+<!--
+Description:
+  Shows the position in the current bar and phrase, and the position of the
+  sync leader (or another playing deck) for aligning bars.
+Variables:
+  group : deck group, e.g. [Channel1]
+-->
+<Template>
+  <WidgetGroup>
+    <ObjectName>PhaseMeterContainer</ObjectName>
+    <Layout>horizontal</Layout>
+    <SizePolicy>min,min</SizePolicy>
+    <Children>
+      <WidgetGroup>
+        <Layout>horizontal</Layout>
+        <SizePolicy>min,min</SizePolicy>
+        <Children>
+          <WidgetGroup><Size>6f,1min</Size></WidgetGroup>
+          <PhaseMeter>
+            <ObjectName>PhaseMeter</ObjectName>
+            <TooltipId>phase_meter</TooltipId>
+            <Size>78f,15f</Size>
+            <Group><Variable name="group"/></Group>
+            <SegmentColor>#555555</SegmentColor>
+            <BeatColor>#aaaaaa</BeatColor>
+            <DownbeatColor>#ff4800</DownbeatColor>
+            <ReferenceColor>#00a2ff</ReferenceColor>
+            <InPhaseColor>#52e000</InPhaseColor>
+          </PhaseMeter>
+          <WidgetGroup><Size>6f,1min</Size></WidgetGroup>
+        </Children>
+        <Connection>
+          <ConfigKey><Variable name="group"/>,track_loaded</ConfigKey>
+          <BindProperty>visible</BindProperty>
+        </Connection>
+      </WidgetGroup>
+    </Children>
+    <Connection>
+      <ConfigKey persist="true">[Skin],show_phase_meter</ConfigKey>
+      <BindProperty>visible</BindProperty>
+    </Connection>
+  </WidgetGroup>
+</Template>

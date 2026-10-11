@@ -98,6 +98,8 @@
                 </Children>
               </WidgetGroup>
 
+              <Template src="skins:LateNight/decks/phase_meter.xml"/>
+
               <WidgetGroup>
                 <ObjectName>DurationGutter</ObjectName>
                 <Layout>horizontal</Layout>

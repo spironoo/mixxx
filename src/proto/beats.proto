@@ -23,9 +23,17 @@ message Bpm {
 
 message BeatMap {
   repeated Beat beat = 1;
+  // Index of a downbeat (the first beat of a bar and of a phrase), counted
+  // from the first entry of `beat`. May be negative. Unset if the downbeat
+  // has not been set by the user.
+  optional int32 downbeat_index = 2;
 }
 
 message BeatGrid {
   optional Bpm bpm = 1;
   optional Beat first_beat = 2;
+  // Index of a downbeat (the first beat of a bar and of a phrase), counted
+  // in beats from `first_beat`. May be negative. Unset if the downbeat has
+  // not been set by the user.
+  optional int32 downbeat_index = 3;
 }

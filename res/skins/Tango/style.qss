@@ -531,6 +531,12 @@ WWidgetGroup {
   #HotcuesLater {
     image: url(skin:/../Tango/buttons/btn_hotcues_later.svg) no-repeat center center;
   }
+  #DownbeatSet {
+    image: url(skin:/../Tango/buttons/btn_downbeat_set.svg) no-repeat center center;
+  }
+  #BarsMove {
+    image: url(skin:/../Tango/buttons/btn_bars_move.svg) no-repeat center center;
+  }
   #BeatEditCover {
     background-color: rgba(51, 51, 51, 120);
   }

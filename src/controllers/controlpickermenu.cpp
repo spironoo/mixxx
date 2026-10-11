@@ -349,7 +349,8 @@ ControlPickerMenu::ControlPickerMenu(QWidget* pParent)
             pBpmMenu);
     addDeckControl("beats_translate_curpos",
             tr("Adjust Beatgrid"),
-            tr("Align beatgrid to current position"),
+            tr("Align beatgrid to current position and start a bar and a "
+               "phrase there"),
             pBpmMenu);
     addDeckControl("beats_translate_match_alignment",
             tr("Adjust Beatgrid - Match Alignment"),
@@ -362,6 +363,20 @@ ControlPickerMenu::ControlPickerMenu(QWidget* pParent)
     addDeckControl("beats_undo_adjustment",
             tr("Revert last BPM/Beatgrid Change"),
             tr("Revert last BPM/Beatgrid Change of the loaded track."),
+            pBpmMenu);
+    pBpmMenu->addSeparator();
+    addDeckControl("downbeat_set",
+            tr("Set Downbeat"),
+            tr("Make the beat closest to the play position the first beat of a "
+               "bar and of a phrase"),
+            pBpmMenu);
+    addDeckControl("downbeat_move_earlier",
+            tr("Move Bar Markers Earlier"),
+            tr("Move the bar and phrase markers one beat earlier"),
+            pBpmMenu);
+    addDeckControl("downbeat_move_later",
+            tr("Move Bar Markers Later"),
+            tr("Move the bar and phrase markers one beat later"),
             pBpmMenu);
     pBpmMenu->addSeparator();
     addDeckAndSamplerControl("quantize", tr("Quantize Mode"), tr("Toggle quantize mode"), pBpmMenu);

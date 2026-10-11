@@ -226,6 +226,27 @@ Variables:
                 </Children>
               </WidgetGroup>
 
+              <WidgetGroup><!-- set downbeat & move bar markers -->
+                <Layout>vertical</Layout>
+                <SizePolicy>f,f</SizePolicy>
+                <Children>
+                  <Template src="skins:Tango/controls/button_1state_optional.xml">
+                    <SetVariable name="TooltipId">downbeat_set</SetVariable>
+                    <SetVariable name="ObjectName">DownbeatSet</SetVariable>
+                    <SetVariable name="Size">24f,24f</SetVariable>
+                    <SetVariable name="ConfigKey"><Variable name="Group"/>,downbeat_set</SetVariable>
+                  </Template>
+
+                  <Template src="skins:Tango/controls/button_1state_right_optional.xml">
+                    <SetVariable name="TooltipId">downbeat_move</SetVariable>
+                    <SetVariable name="ObjectName">BarsMove</SetVariable>
+                    <SetVariable name="Size">24f,24f</SetVariable>
+                    <SetVariable name="ConfigKey"><Variable name="Group"/>,downbeat_move_later</SetVariable>
+                    <SetVariable name="ConfigKeyRight"><Variable name="Group"/>,downbeat_move_earlier</SetVariable>
+                  </Template>
+                </Children>
+              </WidgetGroup>
+
               <WidgetGroup><!-- hotcue sgift buttons, optional -->
                 <Layout>horizontal</Layout>
                 <SizePolicy>f,f</SizePolicy>

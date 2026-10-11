@@ -1,5 +1,7 @@
 #include "engine/controls/bpmcontrol.h"
 
+#include <algorithm>
+
 #include "control/controlencoder.h"
 #include "control/controllinpotmeter.h"
 #include "control/controlproxy.h"
@@ -7,7 +9,9 @@
 #include "engine/effects/groupfeaturestate.h"
 #include "engine/enginebuffer.h"
 #include "moc_bpmcontrol.cpp"
+#include "track/bars.h"
 #include "track/beatutils.h"
+#include "track/cue.h"
 #include "track/track.h"
 #include "util/duration.h"
 #include "util/logger.h"
@@ -39,6 +43,18 @@ constexpr int kLocalBpmSpan = 4;
 // If we are 1 / 8.0 beat fraction near the previous beat we match that instead
 // of the next beat.
 constexpr double kPastBeatMatchThreshold = 1 / 8.0;
+
+/// The intro start is used as the downbeat if no downbeat has been set.
+mixxx::audio::FramePos introStartPosition(const TrackPointer& pTrack) {
+    if (!pTrack) {
+        return mixxx::audio::kInvalidFramePos;
+    }
+    const CuePointer pIntroCue = pTrack->findCueByType(mixxx::CueType::Intro);
+    if (!pIntroCue) {
+        return mixxx::audio::kInvalidFramePos;
+    }
+    return pIntroCue->getPosition();
+}
 
 mixxx::Bpm averageBpmRoundedWithinRange(double averageLength, double rateRatio) {
     // (60 seconds per minute) * (1000 milliseconds per second) /
@@ -285,6 +301,48 @@ BpmControl::BpmControl(const QString& group,
     m_pBeatsUndoPossible = std::make_unique<ControlObject>(
             ConfigKey(group, "beats_undo_possible"));
     m_pBeatsUndoPossible->setReadOnly();
+
+    // Bars and phrases
+    m_pDownbeatSet = std::make_unique<ControlPushButton>(
+            ConfigKey(group, QStringLiteral("downbeat_set")), false);
+    connect(m_pDownbeatSet.get(),
+            &ControlObject::valueChanged,
+            this,
+            &BpmControl::slotDownbeatSet,
+            Qt::DirectConnection);
+    m_pDownbeatMoveEarlier = std::make_unique<ControlPushButton>(
+            ConfigKey(group, QStringLiteral("downbeat_move_earlier")), false);
+    m_pDownbeatMoveEarlier->setKbdRepeatable(true);
+    connect(m_pDownbeatMoveEarlier.get(),
+            &ControlObject::valueChanged,
+            this,
+            &BpmControl::slotDownbeatMoveEarlier,
+            Qt::DirectConnection);
+    m_pDownbeatMoveLater = std::make_unique<ControlPushButton>(
+            ConfigKey(group, QStringLiteral("downbeat_move_later")), false);
+    m_pDownbeatMoveLater->setKbdRepeatable(true);
+    connect(m_pDownbeatMoveLater.get(),
+            &ControlObject::valueChanged,
+            this,
+            &BpmControl::slotDownbeatMoveLater,
+            Qt::DirectConnection);
+    m_pDownbeatMove = std::make_unique<ControlEncoder>(
+            ConfigKey(group, QStringLiteral("downbeat_move")), false);
+    connect(m_pDownbeatMove.get(),
+            &ControlObject::valueChanged,
+            this,
+            &BpmControl::slotDownbeatMove,
+            Qt::DirectConnection);
+
+    m_pBeatInBar = std::make_unique<ControlObject>(
+            ConfigKey(group, QStringLiteral("beat_in_bar")));
+    m_pBeatInBar->setReadOnly();
+    m_pBarInPhrase = std::make_unique<ControlObject>(
+            ConfigKey(group, QStringLiteral("bar_in_phrase")));
+    m_pBarInPhrase->setReadOnly();
+    m_pBarDistance = std::make_unique<ControlObject>(
+            ConfigKey(group, QStringLiteral("bar_distance")));
+    m_pBarDistance->setReadOnly();
 }
 
 mixxx::Bpm BpmControl::getBpm() const {
@@ -396,6 +454,81 @@ void BpmControl::slotBeatsUndoAdjustment(double v) {
     }
     pTrack->undoBeatsChange();
     m_pBeatsUndoPossible->forceSet(pTrack->canUndoBeatsChange());
+}
+
+void BpmControl::slotDownbeatSet(double value) {
+    if (value <= 0) {
+        return;
+    }
+    const TrackPointer pTrack = getEngineBuffer()->getLoadedTrack();
+    if (!pTrack) {
+        return;
+    }
+    const mixxx::BeatsPointer pBeats = pTrack->getBeats();
+    if (!pBeats) {
+        return;
+    }
+    // Make the beat closest to the play position the first beat of a bar
+    // and of a phrase.
+    const auto beatIndex = pBeats->findClosestBeatIndex(frameInfo().currentPosition);
+    if (!beatIndex) {
+        return;
+    }
+    const auto newBeats = pBeats->trySetDownbeatIndex(*beatIndex);
+    if (newBeats) {
+        pTrack->trySetBeats(*newBeats);
+    }
+}
+
+void BpmControl::slotDownbeatMoveEarlier(double value) {
+    if (value <= 0) {
+        return;
+    }
+    moveDownbeat(-1);
+}
+
+void BpmControl::slotDownbeatMoveLater(double value) {
+    if (value <= 0) {
+        return;
+    }
+    moveDownbeat(1);
+}
+
+void BpmControl::slotDownbeatMove(double value) {
+    const auto beats = static_cast<int>(std::round(value));
+    if (beats == 0) {
+        return;
+    }
+    moveDownbeat(beats);
+}
+
+void BpmControl::moveDownbeat(int beats) {
+    const TrackPointer pTrack = getEngineBuffer()->getLoadedTrack();
+    if (!pTrack) {
+        return;
+    }
+    const mixxx::BeatsPointer pBeats = pTrack->getBeats();
+    if (!pBeats) {
+        return;
+    }
+    const int downbeatIndex = pBeats->resolveDownbeatIndex(introStartPosition(pTrack));
+    const auto newBeats = pBeats->trySetDownbeatIndex(downbeatIndex + beats);
+    if (newBeats) {
+        pTrack->trySetBeats(*newBeats);
+    }
+}
+
+void BpmControl::slotTrackCuesUpdated() {
+    // The intro start is used as downbeat if none has been set.
+    updateDownbeatIndex(getEngineBuffer()->getLoadedTrack());
+}
+
+void BpmControl::updateDownbeatIndex(const TrackPointer& pTrack) {
+    const mixxx::BeatsPointer pBeats = m_pBeats;
+    const int downbeatIndex = pBeats
+            ? pBeats->resolveDownbeatIndex(introStartPosition(pTrack))
+            : 0;
+    m_downbeatIndex.storeRelease(downbeatIndex);
 }
 
 void BpmControl::slotBpmTap(double v) {
@@ -1171,11 +1304,19 @@ void BpmControl::slotUpdateRateSlider(double value) {
 
 // called from an engine worker thread
 void BpmControl::trackLoaded(TrackPointer pNewTrack) {
+    disconnect(m_cuesUpdatedConnection);
     mixxx::BeatsPointer pBeats;
     if (pNewTrack) {
         pBeats = pNewTrack->getBeats();
+        m_cuesUpdatedConnection = connect(pNewTrack.get(),
+                &Track::cuesUpdated,
+                this,
+                &BpmControl::slotTrackCuesUpdated,
+                Qt::DirectConnection);
     }
     trackBeatsUpdated(pBeats);
+    // The loaded track might not be available from the engine buffer yet.
+    updateDownbeatIndex(pNewTrack);
 }
 
 void BpmControl::trackBeatsUpdated(mixxx::BeatsPointer pBeats) {
@@ -1187,10 +1328,12 @@ void BpmControl::trackBeatsUpdated(mixxx::BeatsPointer pBeats) {
                                    : mixxx::Bpm());
     }
     m_pBeats = pBeats;
+    m_beatsGeneration.fetchAndAddRelease(1);
     updateLocalBpm();
     resetSyncAdjustment();
     TrackPointer pTrack = getEngineBuffer()->getLoadedTrack();
     m_pBeatsUndoPossible->forceSet(pTrack ? pTrack->canUndoBeatsChange() : 0);
+    updateDownbeatIndex(pTrack);
 }
 
 void BpmControl::trackBpmLockChanged(bool locked) {
@@ -1223,7 +1366,18 @@ void BpmControl::slotBeatsTranslate(double v) {
         const mixxx::audio::FrameDiff_t frameOffset = currentPosition - closestBeat;
         const auto translatedBeats = pBeats->tryTranslate(frameOffset);
         if (translatedBeats) {
-            pTrack->trySetBeats(*translatedBeats);
+            // The aligned beat also becomes the first beat of a bar and a
+            // phrase. This is done in the same beats change, so a single undo
+            // reverts both.
+            mixxx::BeatsPointer pNewBeats = *translatedBeats;
+            const auto downbeatIndex = pNewBeats->findClosestBeatIndex(currentPosition);
+            if (downbeatIndex) {
+                const auto beatsWithDownbeat = pNewBeats->trySetDownbeatIndex(downbeatIndex);
+                if (beatsWithDownbeat) {
+                    pNewBeats = *beatsWithDownbeat;
+                }
+            }
+            pTrack->trySetBeats(pNewBeats);
         }
     }
 }
@@ -1295,6 +1449,7 @@ double BpmControl::updateBeatDistance() {
 }
 
 double BpmControl::updateBeatDistance(mixxx::audio::FramePos playpos) {
+    updateBarPosition(playpos);
     double beatDistance = getBeatDistance(playpos);
     m_pThisBeatDistance.set(beatDistance);
     if (!isSynchronized() && m_dUserOffset.getValue() != 0.0) {
@@ -1304,6 +1459,61 @@ double BpmControl::updateBeatDistance(mixxx::audio::FramePos playpos) {
         kLogger.trace() << "updateBeatDistance" << getGroup() << beatDistance;
     }
     return beatDistance;
+}
+
+void BpmControl::updateBarPosition(mixxx::audio::FramePos position) {
+    const mixxx::BeatsPointer pBeats = m_pBeats;
+    auto clearBarPosition = [this]() {
+        m_pBeatInBar->forceSet(0);
+        m_pBarInPhrase->forceSet(0);
+        m_pBarDistance->forceSet(0);
+    };
+    if (!pBeats || !position.isValid()) {
+        clearBarPosition();
+        return;
+    }
+
+    const int beatsGeneration = m_beatsGeneration.loadAcquire();
+    if (beatsGeneration != m_barCache.beatsGeneration) {
+        m_barCache = BarCache();
+        m_barCache.beatsGeneration = beatsGeneration;
+    }
+
+    // Find the beat at or before `position` and the one after it.
+    auto it = pBeats->iteratorFrom(position);
+    if (it == pBeats->cbegin() || it == pBeats->cend()) {
+        clearBarPosition();
+        return;
+    }
+    if (*it > position) {
+        --it;
+    }
+    const auto nextIt = std::next(it);
+    if (it == pBeats->cbegin() || nextIt == pBeats->cend()) {
+        clearBarPosition();
+        return;
+    }
+
+    const mixxx::audio::FramePos beatPosition = *it;
+    // Looking up the index can be expensive for beat maps, so it is only done
+    // once per beat.
+    if (!m_barCache.beatPosition.isValid() || m_barCache.beatPosition != beatPosition) {
+        m_barCache.beatPosition = beatPosition;
+        m_barCache.beatIndex = pBeats->beatIndexOf(it);
+    }
+    const int beatIndex = m_barCache.beatIndex;
+    const int downbeatIndex = m_downbeatIndex.loadAcquire();
+
+    const int beatInBar = mixxx::bars::beatInBar(beatIndex, downbeatIndex);
+    const int barInPhrase = mixxx::bars::barInPhrase(beatIndex, downbeatIndex);
+    const mixxx::audio::FrameDiff_t beatLengthFrames = *nextIt - beatPosition;
+    const double beatFraction = beatLengthFrames > 0
+            ? std::clamp((position - beatPosition) / beatLengthFrames, 0.0, 1.0)
+            : 0.0;
+
+    m_pBeatInBar->forceSet(beatInBar + 1);
+    m_pBarInPhrase->forceSet(barInPhrase + 1);
+    m_pBarDistance->forceSet((beatInBar + beatFraction) / mixxx::bars::kBeatsPerBar);
 }
 
 void BpmControl::setTargetBeatDistance(double beatDistance) {

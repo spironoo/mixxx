@@ -88,6 +88,8 @@ Variables:
             <Channel><Variable name="chanNum"/></Channel>
           </TrackProperty>
 
+          <Template src="skins:Tango/decks/phase_meter.xml"/>
+
           <Label>
             <ObjectName>TrackBy</ObjectName>
             <Size>22f,21f</Size>

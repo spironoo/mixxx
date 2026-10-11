@@ -1,0 +1,43 @@
+<!--
+Description:
+  Shows the position in the current bar and phrase, and the position of the
+  sync leader (or another playing deck) for aligning bars.
+Variables:
+  Group : deck group, e.g. [Channel1]
+-->
+<Template>
+  <WidgetGroup>
+    <ObjectName>PhaseMeterContainer</ObjectName>
+    <Layout>horizontal</Layout>
+    <SizePolicy>min,min</SizePolicy>
+    <Children>
+      <WidgetGroup>
+        <Layout>horizontal</Layout>
+        <SizePolicy>min,min</SizePolicy>
+        <Children>
+          <WidgetGroup><Size>6f,1min</Size></WidgetGroup>
+          <PhaseMeter>
+            <ObjectName>PhaseMeter</ObjectName>
+            <TooltipId>phase_meter</TooltipId>
+            <Size>72f,16f</Size>
+            <Group><Variable name="Group"/></Group>
+            <SegmentColor><Variable name="PhaseMeterSegmentColor"/></SegmentColor>
+            <BeatColor><Variable name="PhaseMeterBeatColor"/></BeatColor>
+            <DownbeatColor><Variable name="PhaseMeterDownbeatColor"/></DownbeatColor>
+            <ReferenceColor><Variable name="PhaseMeterReferenceColor"/></ReferenceColor>
+            <InPhaseColor><Variable name="PhaseMeterInPhaseColor"/></InPhaseColor>
+          </PhaseMeter>
+          <WidgetGroup><Size>8f,1min</Size></WidgetGroup>
+        </Children>
+        <Connection>
+          <ConfigKey><Variable name="Group"/>,track_loaded</ConfigKey>
+          <BindProperty>visible</BindProperty>
+        </Connection>
+      </WidgetGroup>
+    </Children>
+    <Connection>
+      <ConfigKey persist="true">[Skin],show_phase_meter</ConfigKey>
+      <BindProperty>visible</BindProperty>
+    </Connection>
+  </WidgetGroup>
+</Template>

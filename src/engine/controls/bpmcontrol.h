@@ -117,7 +117,22 @@ class BpmControl : public EngineControl {
     void slotToggleBpmLock(double);
     void slotBeatsUndoAdjustment(double value);
 
+    void slotDownbeatSet(double value);
+    void slotDownbeatMoveEarlier(double value);
+    void slotDownbeatMoveLater(double value);
+    void slotDownbeatMove(double value);
+    void slotTrackCuesUpdated();
+
   private:
+    /// Moves the downbeat by `beats` beats (negative = earlier).
+    void moveDownbeat(int beats);
+    /// Recalculates the downbeat used for bars and phrases. Must not be called
+    /// from the engine thread.
+    void updateDownbeatIndex(const TrackPointer& pTrack);
+    /// Updates beat_in_bar, bar_in_phrase and bar_distance for `position`.
+    /// Called from the engine thread.
+    void updateBarPosition(mixxx::audio::FramePos position);
+
     SyncMode getSyncMode() const {
         return syncModeFromDouble(m_pSyncMode.get());
     }
@@ -197,6 +212,33 @@ class BpmControl : public EngineControl {
 
     // m_pBeats is written from an engine worker thread
     mixxx::BeatsPointer m_pBeats;
+    // Incremented whenever m_pBeats changes, used to invalidate the bar cache.
+    QAtomicInt m_beatsGeneration;
+    // The beat index used as downbeat for bars and phrases, see
+    // mixxx::Beats::resolveDownbeatIndex(). Written outside the engine thread.
+    QAtomicInt m_downbeatIndex;
+    QMetaObject::Connection m_cuesUpdatedConnection;
+
+    // Bars and phrases
+    std::unique_ptr<ControlPushButton> m_pDownbeatSet;
+    std::unique_ptr<ControlPushButton> m_pDownbeatMoveEarlier;
+    std::unique_ptr<ControlPushButton> m_pDownbeatMoveLater;
+    std::unique_ptr<ControlEncoder> m_pDownbeatMove;
+    // 1-based position of the current beat in its bar, 0 if unknown
+    std::unique_ptr<ControlObject> m_pBeatInBar;
+    // 1-based position of the current bar in its phrase, 0 if unknown
+    std::unique_ptr<ControlObject> m_pBarInPhrase;
+    // Fraction of the current bar that has been played, 0 to 1
+    std::unique_ptr<ControlObject> m_pBarDistance;
+
+    // Cache for updateBarPosition(), used in the engine thread only. Avoids
+    // looking up the index of the previous beat on every callback.
+    struct BarCache {
+        int beatsGeneration = -1;
+        mixxx::audio::FramePos beatPosition;
+        int beatIndex = 0;
+    };
+    BarCache m_barCache;
 
     FRIEND_TEST(EngineSyncTest, UserTweakPreservedInSeek);
     FRIEND_TEST(EngineSyncTest, FollowerUserTweakPreservedInLeaderChange);

@@ -157,12 +157,14 @@ class Beats : private std::enable_shared_from_this<Beats> {
             mixxx::audio::FramePos lastMarkerPosition,
             mixxx::Bpm lastMarkerBpm,
             mixxx::audio::SampleRate sampleRate,
-            const QString& subVersion)
+            const QString& subVersion,
+            std::optional<int> downbeatIndex = std::nullopt)
             : m_markers(std::move(markers)),
               m_lastMarkerPosition(lastMarkerPosition),
               m_lastMarkerBpm(lastMarkerBpm),
               m_sampleRate(sampleRate),
-              m_subVersion(subVersion) {
+              m_subVersion(subVersion),
+              m_downbeatIndex(downbeatIndex) {
         DEBUG_ASSERT(m_lastMarkerPosition.isValid());
         DEBUG_ASSERT(!m_lastMarkerPosition.isFractional());
         DEBUG_ASSERT(m_lastMarkerBpm.isValid());
@@ -172,12 +174,14 @@ class Beats : private std::enable_shared_from_this<Beats> {
     Beats(mixxx::audio::FramePos lastMarkerPosition,
             mixxx::Bpm lastMarkerBpm,
             mixxx::audio::SampleRate sampleRate,
-            const QString& subVersion)
+            const QString& subVersion,
+            std::optional<int> downbeatIndex = std::nullopt)
             : Beats(std::vector<BeatMarker>(),
                       lastMarkerPosition,
                       lastMarkerBpm,
                       sampleRate,
-                      subVersion) {
+                      subVersion,
+                      downbeatIndex) {
     }
 
     ~Beats() = default;
@@ -216,8 +220,9 @@ class Beats : private std::enable_shared_from_this<Beats> {
     friend bool operator==(const Beats& lhs, const Beats& rhs) {
         return lhs.m_markers == rhs.m_markers &&
                 lhs.m_lastMarkerPosition == rhs.m_lastMarkerPosition &&
-                lhs.m_lastMarkerBpm == rhs.m_lastMarkerBpm && lhs.m_sampleRate &&
-                rhs.m_sampleRate;
+                lhs.m_lastMarkerBpm == rhs.m_lastMarkerBpm &&
+                lhs.m_sampleRate == rhs.m_sampleRate &&
+                lhs.m_downbeatIndex == rhs.m_downbeatIndex;
     }
 
     friend bool operator!=(const Beats& lhs, const Beats& rhs) {
@@ -388,6 +393,37 @@ class Beats : private std::enable_shared_from_this<Beats> {
     }
 
     ////////////////////////////////////////////////////////////////////////////
+    // Bars and phrases
+    ////////////////////////////////////////////////////////////////////////////
+
+    /// Returns the index of the beat that `it` points to. Beat indices are
+    /// counted from the first beat marker (index 0) and are negative for beats
+    /// before it. They don't change when the beats are translated or
+    /// serialized.
+    ///
+    /// Must not be called with `cbegin()` or `cend()`.
+    int beatIndexOf(const ConstIterator& it) const {
+        return it - cfirstmarker();
+    }
+
+    /// Returns the index of the beat closest to `position`, or `std::nullopt`
+    /// if no such beat exists.
+    std::optional<int> findClosestBeatIndex(audio::FramePos position) const;
+
+    /// Returns the index of the beat that has been set as the downbeat, i.e.
+    /// the first beat of a bar that also starts a phrase. Returns
+    /// `std::nullopt` if no downbeat has been set.
+    std::optional<int> getDownbeatIndex() const {
+        return m_downbeatIndex;
+    }
+
+    /// Returns the downbeat index if a downbeat has been set. Otherwise the
+    /// beat closest to `fallbackPosition` (e.g. the intro start) is assumed to
+    /// be a downbeat, or the beat at the first marker if `fallbackPosition` is
+    /// invalid.
+    int resolveDownbeatIndex(audio::FramePos fallbackPosition) const;
+
+    ////////////////////////////////////////////////////////////////////////////
     // Beat mutations
     ////////////////////////////////////////////////////////////////////////////
 
@@ -418,6 +454,14 @@ class Beats : private std::enable_shared_from_this<Beats> {
     /// failure.
     std::optional<BeatsPointer> trySetBpm(mixxx::Bpm bpm) const;
 
+    /// Set the beat with index `downbeatIndex` (see `beatIndexOf()`) as the
+    /// downbeat, i.e. the first beat of a bar that also starts a phrase.
+    /// Passing `std::nullopt` removes a previously set downbeat.
+    //
+    /// Returns a pointer to the modified beats object, or `nullopt` on
+    /// failure.
+    std::optional<BeatsPointer> trySetDownbeatIndex(std::optional<int> downbeatIndex) const;
+
   protected:
     /// Type tag for making public constructors of derived classes inaccessible.
     ///
@@ -445,6 +489,9 @@ class Beats : private std::enable_shared_from_this<Beats> {
 
     // The sub-version of this beatgrid.
     const QString m_subVersion;
+
+    // The index of a beat that starts a bar and a phrase, if set by the user.
+    std::optional<int> m_downbeatIndex;
 };
 
 } // namespace mixxx
