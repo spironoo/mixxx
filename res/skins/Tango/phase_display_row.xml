@@ -1,0 +1,25 @@
+<!--
+Description:
+  One row of the top bar phase display.
+Variables:
+  ChanNum    : deck number
+  DeckColor  : color of the current beat
+  VisibleKey : control that shows the row
+-->
+<Template>
+  <PhaseMeter>
+    <ObjectName>PhaseDisplayRow</ObjectName>
+    <TooltipId>phase_display</TooltipId>
+    <Size>240f,1me</Size>
+    <Group>[Channel<Variable name="ChanNum"/>]</Group>
+    <Style>Phrase</Style>
+    <SegmentColor>#3a3a3a</SegmentColor>
+    <BeatColor><Variable name="DeckColor"/></BeatColor>
+    <ReferenceColor>#eeeeee</ReferenceColor>
+    <InPhaseColor>#52e000</InPhaseColor>
+    <Connection>
+      <ConfigKey persist="true"><Variable name="VisibleKey"/></ConfigKey>
+      <BindProperty>visible</BindProperty>
+    </Connection>
+  </PhaseMeter>
+</Template>

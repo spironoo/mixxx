@@ -1,0 +1,26 @@
+<!DOCTYPE template>
+<!--
+  Description:
+    One row of the tool bar phase display.
+  Variables:
+    i          : deck number
+    DeckColor  : color of the current beat
+    VisibleKey : control that shows the row
+-->
+<Template>
+  <PhaseMeter>
+    <ObjectName>PhaseDisplayRow</ObjectName>
+    <TooltipId>phase_display</TooltipId>
+    <Size>256f,1me</Size>
+    <Group>[Channel<Variable name="i"/>]</Group>
+    <Style>Phrase</Style>
+    <SegmentColor>#3f3f3f</SegmentColor>
+    <BeatColor><Variable name="DeckColor"/></BeatColor>
+    <ReferenceColor>#d2d2d2</ReferenceColor>
+    <InPhaseColor>#64dd17</InPhaseColor>
+    <Connection>
+      <ConfigKey><Variable name="VisibleKey"/></ConfigKey>
+      <BindProperty>visible</BindProperty>
+    </Connection>
+  </PhaseMeter>
+</Template>

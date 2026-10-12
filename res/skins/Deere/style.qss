@@ -2531,3 +2531,7 @@ WRateRange {
 #RateDisplayBottomRate {
     qproperty-alignment: 'AlignRight | AlignBottom';
 }
+
+#PhaseDisplay {
+  qproperty-layoutSpacing: 1;
+}

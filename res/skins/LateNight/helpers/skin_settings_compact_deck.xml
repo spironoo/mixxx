@@ -28,7 +28,7 @@ Description:
       <!-- Phase Meter -->
       <Template src="skins:LateNight/helpers/skin_settings_button_2state.xml">
         <SetVariable name="TooltipId">phase_meter</SetVariable>
-        <SetVariable name="Text">Phase Meter</SetVariable>
+        <SetVariable name="Text">Phase Meter (Decks)</SetVariable>
         <SetVariable name="Setting">[Skin],show_phase_meter</SetVariable>
       </Template>
 

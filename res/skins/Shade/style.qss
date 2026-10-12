@@ -1099,3 +1099,10 @@ WRateRange {
   font-size: 10px;
   qproperty-alignment: 'AlignCenter';
 }
+
+#PhaseDisplay {
+  padding: 2px 0px 1px 0px;
+}
+#PhaseDisplayRows {
+  qproperty-layoutSpacing: 1;
+}

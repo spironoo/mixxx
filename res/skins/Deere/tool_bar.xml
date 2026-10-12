@@ -213,6 +213,12 @@
         <SizePolicy>me,min</SizePolicy>
       </WidgetGroup>
 
+      <Template src="skin:phase_display.xml"/>
+
+      <WidgetGroup>
+        <SizePolicy>me,min</SizePolicy>
+      </WidgetGroup>
+
       <WidgetGroup>
         <ObjectName>ToolBarRight</ObjectName>
         <Layout>horizontal</Layout>

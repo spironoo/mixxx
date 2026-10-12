@@ -353,6 +353,33 @@ void WMainMenuBar::initialize() {
             ConfigKey(kSkinGroup, QStringLiteral("show_library_coverart")));
     pViewMenu->addAction(pViewShowCoverArt);
 
+    QString showPhaseDisplayTitle = tr("Show Phase Display");
+    QString showPhaseDisplayText =
+            tr("Show the phrase position of all decks at the top of the "
+               "Mixxx interface.") +
+            " " + mayNotBeSupported;
+    auto* pViewShowPhaseDisplay = new QAction(showPhaseDisplayTitle, this);
+    pViewShowPhaseDisplay->setCheckable(true);
+    pViewShowPhaseDisplay->setStatusTip(showPhaseDisplayText);
+    pViewShowPhaseDisplay->setWhatsThis(
+            buildWhatsThis(showPhaseDisplayTitle, showPhaseDisplayText));
+    createVisibilityControl(pViewShowPhaseDisplay,
+            ConfigKey(kSkinGroup, QStringLiteral("show_phase_display")));
+    pViewMenu->addAction(pViewShowPhaseDisplay);
+
+    QString showPhaseMetersTitle = tr("Show Deck Phase Meters");
+    QString showPhaseMetersText =
+            tr("Show the bar and phrase position in each deck.") + " " +
+            mayNotBeSupported;
+    auto* pViewShowPhaseMeters = new QAction(showPhaseMetersTitle, this);
+    pViewShowPhaseMeters->setCheckable(true);
+    pViewShowPhaseMeters->setStatusTip(showPhaseMetersText);
+    pViewShowPhaseMeters->setWhatsThis(
+            buildWhatsThis(showPhaseMetersTitle, showPhaseMetersText));
+    createVisibilityControl(pViewShowPhaseMeters,
+            ConfigKey(kSkinGroup, QStringLiteral("show_phase_meter")));
+    pViewMenu->addAction(pViewShowPhaseMeters);
+
     //: menu title
     QString keywheelTitle = tr("Show Keywheel");
     //: tooltip text

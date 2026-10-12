@@ -64,6 +64,7 @@ WPhaseMeter::WPhaseMeter(QWidget* pParent, const QString& group)
           m_numDecks(kAppGroup, QStringLiteral("num_decks"), ControlFlag::AllowMissingOrInvalid),
           m_pGuiTick(new ControlProxy(
                   kAppGroup, QStringLiteral("gui_tick_full_period_s"), this)),
+          m_style(Style::Bar),
           m_segmentColor(0x33, 0x33, 0x33),
           m_beatColor(0x99, 0x99, 0x99),
           m_downbeatColor(0xff, 0x3b, 0x30),
@@ -83,6 +84,15 @@ void WPhaseMeter::setup(const QDomNode& node, const SkinContext& context) {
     m_referenceColor = colorOrDefault(
             context, node, QStringLiteral("ReferenceColor"), m_referenceColor);
     m_inPhaseColor = colorOrDefault(context, node, QStringLiteral("InPhaseColor"), m_inPhaseColor);
+    const QString style = context.selectString(node, QStringLiteral("Style"));
+    if (style.compare(QStringLiteral("Phrase"), Qt::CaseInsensitive) == 0) {
+        m_style = Style::Phrase;
+    } else {
+        if (!style.isEmpty() && style.compare(QStringLiteral("Bar"), Qt::CaseInsensitive) != 0) {
+            SKIN_WARNING(node, context, QStringLiteral("Unknown PhaseMeter Style: %1").arg(style));
+        }
+        m_style = Style::Bar;
+    }
     setFocusPolicy(Qt::NoFocus);
 }
 
@@ -161,6 +171,12 @@ void WPhaseMeter::slotGuiTick() {
     update();
 }
 
+bool WPhaseMeter::isInPhase() const {
+    return m_state.valid && m_state.hasReference &&
+            std::abs(barOffsetBeats(m_state.barPosition, m_state.referenceBarPosition)) <
+            kInPhaseThresholdBeats;
+}
+
 void WPhaseMeter::paintEvent(QPaintEvent* /*unused*/) {
     QStyleOption option;
     option.initFrom(this);
@@ -168,6 +184,69 @@ void WPhaseMeter::paintEvent(QPaintEvent* /*unused*/) {
     painter.drawPrimitive(QStyle::PE_Widget, option);
 
     const QRectF area = contentsRect();
+    switch (m_style) {
+    case Style::Bar:
+        paintBarStyle(&painter, area);
+        break;
+    case Style::Phrase:
+        paintPhraseStyle(&painter, area);
+        break;
+    }
+}
+
+void WPhaseMeter::paintPhraseStyle(QPainter* pPainter, const QRectF& area) {
+    constexpr int kBeatsPerBar = mixxx::bars::kBeatsPerBar;
+    constexpr int kBarsPerPhrase = mixxx::bars::kBarsPerPhrase;
+    constexpr int kCells = mixxx::bars::kBeatsPerPhrase;
+    if (area.width() < 2 * kCells || area.height() < 2) {
+        return;
+    }
+
+    // Cells of a bar are separated by small gaps, bars by larger ones.
+    const double cellGap = std::max(1.0, std::round(area.width() * 0.004));
+    const double barGap = 3 * cellGap;
+    const double cellWidth = (area.width() - (kBarsPerPhrase - 1) * barGap -
+                                     kBarsPerPhrase * (kBeatsPerBar - 1) * cellGap) /
+            kCells;
+    auto cellRect = [&](int cell) {
+        const int bar = cell / kBeatsPerBar;
+        const int beat = cell % kBeatsPerBar;
+        const double left = area.left() +
+                bar * (kBeatsPerBar * cellWidth + (kBeatsPerBar - 1) * cellGap + barGap) +
+                beat * (cellWidth + cellGap);
+        return QRectF(left, area.top(), cellWidth, area.height());
+    };
+    // Index of the cell for a position in the bar (in beats) and a bar in
+    // the phrase (1-based)
+    auto cellIndex = [](double barPosition, int barInPhrase) {
+        const int beat = std::clamp(static_cast<int>(barPosition), 0, kBeatsPerBar - 1);
+        const int bar = std::clamp(barInPhrase - 1, 0, kBarsPerPhrase - 1);
+        return bar * kBeatsPerBar + beat;
+    };
+
+    const State& state = m_state;
+    const int currentCell = state.valid ? cellIndex(state.barPosition, state.barInPhrase) : -1;
+    for (int cell = 0; cell < kCells; ++cell) {
+        pPainter->fillRect(cellRect(cell),
+                cell == currentCell ? m_beatColor : m_segmentColor);
+    }
+
+    if (!state.valid || !state.hasReference) {
+        return;
+    }
+    // Outline the reference deck's current beat. It turns green when the
+    // beats and the phrase position match.
+    const int referenceCell = cellIndex(state.referenceBarPosition, state.referenceBarInPhrase);
+    const bool phraseAligned = isInPhase() && referenceCell == currentCell;
+    constexpr double kOutlineWidth = 1.0;
+    pPainter->setBrush(Qt::NoBrush);
+    pPainter->setPen(QPen(phraseAligned ? m_inPhaseColor : m_referenceColor, kOutlineWidth));
+    constexpr double kInset = kOutlineWidth / 2;
+    pPainter->drawRect(cellRect(referenceCell).adjusted(kInset, kInset, -kInset, -kInset));
+}
+
+void WPhaseMeter::paintBarStyle(QPainter* pPainter, const QRectF& area) {
+    QPainter& painter = *pPainter;
     constexpr int kSegments = mixxx::bars::kBeatsPerBar;
     if (area.width() < 2 * kSegments || area.height() < 3) {
         return;
@@ -194,11 +273,7 @@ void WPhaseMeter::paintEvent(QPaintEvent* /*unused*/) {
     };
 
     const State& state = m_state;
-    bool inPhase = false;
-    if (state.valid && state.hasReference) {
-        inPhase = std::abs(barOffsetBeats(state.barPosition, state.referenceBarPosition)) <
-                kInPhaseThresholdBeats;
-    }
+    const bool inPhase = isInPhase();
 
     for (int segment = 0; segment < kSegments; ++segment) {
         const QRectF segmentRect(segmentLeft(segment), area.top(), segmentWidth, segmentHeight);

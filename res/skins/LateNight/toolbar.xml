@@ -120,6 +120,10 @@
 
       <WidgetGroup><Size>me,min</Size></WidgetGroup>
 
+      <Template src="skins:LateNight/phase_display.xml"/>
+
+      <WidgetGroup><Size>me,min</Size></WidgetGroup>
+
       <StatusLight>
         <TooltipId>autodj_status</TooltipId>
         <ObjectName>AutoDjStatus</ObjectName>

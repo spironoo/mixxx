@@ -3311,3 +3311,8 @@ WEffectChainPresetSelector::indicator::unchecked:selected,
 WRateRange {
     font-size: 11px;
 }
+
+#PhaseDisplayRows {
+  qproperty-layoutSpacing: 1;
+  qproperty-layoutAlignment: 'AlignVCenter';
+}

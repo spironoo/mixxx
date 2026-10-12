@@ -53,6 +53,13 @@ Description:
             </Children>
           </WidgetGroup>
 
+          <!-- Phase display in the toolbar -->
+          <Template src="skins:LateNight/helpers/skin_settings_button_2state.xml">
+            <SetVariable name="TooltipId">phase_display</SetVariable>
+            <SetVariable name="Text">Phase Display (Toolbar)</SetVariable>
+            <SetVariable name="Setting">[Skin],show_phase_display</SetVariable>
+          </Template>
+
 <!-- Deck size selector -->
           <WidgetGroup>
             <ObjectName>DeckSizeSettings</ObjectName>

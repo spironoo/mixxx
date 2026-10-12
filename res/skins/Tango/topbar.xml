@@ -107,6 +107,8 @@ Description:
         </Connection>
       </WidgetGroup><!-- /Crossfader -->
 
+      <Template src="skins:Tango/phase_display.xml"/>
+
       <WidgetGroup><!-- Skin toggles, Rec, Broadcast, Clock, Skin menu toggle -->
         <Layout>horizontal</Layout>
         <ObjectName>SkinControlsBar</ObjectName>

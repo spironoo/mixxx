@@ -1,0 +1,33 @@
+<!--
+Description:
+  Phase display above the decks: one row per deck, each showing the position
+  in the current phrase with one cell per beat, grouped by bar.
+-->
+<Template>
+  <WidgetGroup>
+    <ObjectName>PhaseDisplay</ObjectName>
+    <Layout>horizontal</Layout>
+    <SizePolicy>me,min</SizePolicy>
+    <Children>
+      <WidgetGroup><Size>0me,1min</Size></WidgetGroup>
+      <WidgetGroup>
+        <ObjectName>PhaseDisplayRows</ObjectName>
+        <Layout>vertical</Layout>
+        <Size>256f,19f</Size>
+        <Children>
+          <Template src="skin:phase_display_row.xml">
+            <SetVariable name="channum">1</SetVariable>
+          </Template>
+          <Template src="skin:phase_display_row.xml">
+            <SetVariable name="channum">2</SetVariable>
+          </Template>
+        </Children>
+      </WidgetGroup>
+      <WidgetGroup><Size>0me,1min</Size></WidgetGroup>
+    </Children>
+    <Connection>
+      <ConfigKey persist="true">[Skin],show_phase_display</ConfigKey>
+      <BindProperty>visible</BindProperty>
+    </Connection>
+  </WidgetGroup>
+</Template>
