@@ -393,6 +393,9 @@ WOverview QLabel {
   #ToolBar, #ToolBarSection {
     qproperty-layoutAlignment: 'AlignLeft | AlignVCenter';
   }
+  #PhaseDisplay {
+    qproperty-layoutSpacing: 1;
+  }
   #RecBox {
     qproperty-layoutAlignment: 'AlignCenter';
     }

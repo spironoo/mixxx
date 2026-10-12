@@ -1,0 +1,40 @@
+<!--
+Description:
+  Phase display for the toolbar: one row per deck, each showing the position
+  in the current phrase with one cell per beat, grouped by bar. Decks 3 and 4
+  are only shown in 4 deck mode. The rows are in the same order as the
+  waveforms.
+-->
+<Template>
+  <WidgetGroup>
+    <ObjectName>PhaseDisplay</ObjectName>
+    <Layout>vertical</Layout>
+    <Size>256f,20f</Size>
+    <Children>
+      <Template src="skins:LateNight/phase_display_row.xml">
+        <SetVariable name="ChanNum">3</SetVariable>
+        <SetVariable name="DeckColor"><Variable name="SignalColor_34"/></SetVariable>
+        <SetVariable name="VisibleKey">[Skin],show_4decks</SetVariable>
+      </Template>
+      <Template src="skins:LateNight/phase_display_row.xml">
+        <SetVariable name="ChanNum">1</SetVariable>
+        <SetVariable name="DeckColor"><Variable name="SignalColor_12"/></SetVariable>
+        <SetVariable name="VisibleKey">[Skin],show_phase_display</SetVariable>
+      </Template>
+      <Template src="skins:LateNight/phase_display_row.xml">
+        <SetVariable name="ChanNum">2</SetVariable>
+        <SetVariable name="DeckColor"><Variable name="SignalColor_12"/></SetVariable>
+        <SetVariable name="VisibleKey">[Skin],show_phase_display</SetVariable>
+      </Template>
+      <Template src="skins:LateNight/phase_display_row.xml">
+        <SetVariable name="ChanNum">4</SetVariable>
+        <SetVariable name="DeckColor"><Variable name="SignalColor_34"/></SetVariable>
+        <SetVariable name="VisibleKey">[Skin],show_4decks</SetVariable>
+      </Template>
+    </Children>
+    <Connection>
+      <ConfigKey persist="true">[Skin],show_phase_display</ConfigKey>
+      <BindProperty>visible</BindProperty>
+    </Connection>
+  </WidgetGroup>
+</Template>

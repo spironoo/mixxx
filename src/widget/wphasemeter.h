@@ -10,12 +10,19 @@
 
 class ControlProxy;
 class QDomNode;
+class QPainter;
 class SkinContext;
 
-/// Shows where a deck is within the current bar (one segment per beat) and
-/// phrase (one dot per bar). If another deck is the sync leader, or is playing
-/// while this deck is not the leader, its position is shown as a marker, so
-/// bars and phrases of both decks can be aligned.
+/// Shows where a deck is within the current bar and phrase. If another deck is
+/// the sync leader, or is playing while this deck is not the leader, its
+/// position is shown as well, so bars and phrases of both decks can be
+/// aligned.
+///
+/// The `Bar` style (default) shows one segment per beat of the bar, filling
+/// up as the bar progresses, and one dot per bar of the phrase below. The
+/// `Phrase` style shows a single row of one cell per beat of the phrase,
+/// grouped by bar, with the current beat lit. Several `Phrase` style meters
+/// can be stacked to compare decks at a glance.
 class WPhaseMeter : public WWidget {
     Q_OBJECT
   public:
@@ -34,6 +41,11 @@ class WPhaseMeter : public WWidget {
     void slotGuiTick();
 
   private:
+    enum class Style {
+        Bar,
+        Phrase,
+    };
+
     struct DeckControls {
         explicit DeckControls(const QString& group);
 
@@ -63,6 +75,9 @@ class WPhaseMeter : public WWidget {
     void updateDecks();
     const DeckControls* findReference() const;
     State currentState() const;
+    bool isInPhase() const;
+    void paintBarStyle(QPainter* pPainter, const QRectF& area);
+    void paintPhraseStyle(QPainter* pPainter, const QRectF& area);
 
     const QString m_group;
     DeckControls m_deck;
@@ -71,6 +86,7 @@ class WPhaseMeter : public WWidget {
     std::vector<std::unique_ptr<DeckControls>> m_allDecks;
     ControlProxy* m_pGuiTick;
     State m_state;
+    Style m_style;
 
     QColor m_segmentColor;
     QColor m_beatColor;

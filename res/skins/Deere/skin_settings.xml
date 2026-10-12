@@ -108,8 +108,14 @@
 
           <Template src="skins:Deere/skinsettings_button.xml">
             <SetVariable name="TooltipId">phase_meter</SetVariable>
-            <SetVariable name="text">Phase Meter</SetVariable>
+            <SetVariable name="text">Phase Meter (Decks)</SetVariable>
             <SetVariable name="skinsetting">[Skin],show_phase_meter</SetVariable>
+          </Template>
+
+          <Template src="skins:Deere/skinsettings_button.xml">
+            <SetVariable name="TooltipId">phase_display</SetVariable>
+            <SetVariable name="text">Phase Display (Tool Bar)</SetVariable>
+            <SetVariable name="skinsetting">[Skin],show_phase_display</SetVariable>
           </Template>
 
           <Template src="skins:Deere/skinsettings_button.xml">

@@ -150,8 +150,13 @@ Description:
           </Template>
 
           <Template src="skins:Tango/controls/skin_settings_button_2state.xml">
-            <SetVariable name="text">Phase Meter</SetVariable>
+            <SetVariable name="text">Phase Meter (Decks)</SetVariable>
             <SetVariable name="Setting">[Skin],show_phase_meter</SetVariable>
+          </Template>
+
+          <Template src="skins:Tango/controls/skin_settings_button_2state.xml">
+            <SetVariable name="text">Phase Display (Top Bar)</SetVariable>
+            <SetVariable name="Setting">[Skin],show_phase_display</SetVariable>
           </Template>
 
           <WidgetGroup><!-- Permanent deck controls -->

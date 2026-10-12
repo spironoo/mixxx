@@ -499,6 +499,14 @@ void Tooltips::addStandardTooltips() {
             << QString("%1: %2").arg(leftClick, tr("Move the bar and phrase markers one beat later."))
             << QString("%1: %2").arg(rightClick, tr("Move the bar and phrase markers one beat earlier."));
 
+    add("phase_display")
+            << tr("Phase Display")
+            << tr("Shows the position in the current phrase of each deck: one "
+                  "cell per beat, grouped by bar.")
+            << tr("The outline shows the position of the sync leader, or of "
+                  "another playing deck. It turns green when beats and phrase "
+                  "positions are aligned.");
+
     add("phase_meter")
             << tr("Phase Meter")
             << tr("Shows the position in the current bar (one segment per beat) "

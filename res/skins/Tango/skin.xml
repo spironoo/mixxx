@@ -59,6 +59,7 @@
       <attribute persist="true" config_key="[Tango],key_display_match">1</attribute>
       <attribute persist="true" config_key="[Skin],show_starrating">1</attribute>
       <attribute persist="true" config_key="[Skin],show_phase_meter">1</attribute>
+      <attribute persist="true" config_key="[Skin],show_phase_display">1</attribute>
       <attribute persist="true" config_key="[Tango],symmetric_overviews">0</attribute>
       <attribute persist="true" config_key="[Tango],symmetric_time">0</attribute>
       <attribute persist="true" config_key="[Tango],trackComment">1</attribute>

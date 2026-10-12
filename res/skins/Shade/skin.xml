@@ -74,6 +74,8 @@
       <attribute persist="true" config_key="[Skin],show_vinylcontrol">0</attribute>
       <attribute persist="true" config_key="[Skin],show_loop_beatjump_controls">0</attribute>
       <attribute persist="true" config_key="[Skin],show_intro_outro_cues">1</attribute>
+      <attribute persist="true" config_key="[Skin],show_phase_meter">1</attribute>
+      <attribute persist="true" config_key="[Skin],show_phase_display">1</attribute>
 
       <!--Disable hidden effect routing Buttons-->
       <attribute persist="false" config_key="[EffectRack1_EffectUnit1],group_[Master]_enable">0</attribute>
@@ -329,6 +331,7 @@
     ############################################################################################
     -->
 
+    <Template src="skin:phase_display.xml"/>
     <WidgetGroup>
       <Size>0e,2f</Size>
     </WidgetGroup>

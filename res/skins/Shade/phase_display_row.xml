@@ -1,0 +1,18 @@
+<!--
+Description:
+  One row of the phase display.
+Variables:
+  channum : deck number
+-->
+<Template>
+  <PhaseMeter>
+    <TooltipId>phase_display</TooltipId>
+    <Size>256f,1me</Size>
+    <Group>[Channel<Variable name="channum"/>]</Group>
+    <Style>Phrase</Style>
+    <SegmentColor>#b1bbc5</SegmentColor>
+    <BeatColor>#ec4522</BeatColor>
+    <ReferenceColor>#0066cc</ReferenceColor>
+    <InPhaseColor>#1e8e3e</InPhaseColor>
+  </PhaseMeter>
+</Template>

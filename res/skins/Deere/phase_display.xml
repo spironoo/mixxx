@@ -1,0 +1,41 @@
+<!DOCTYPE template>
+<!--
+  Description:
+    Phase display for the tool bar: one row per deck, each showing the
+    position in the current phrase with one cell per beat, grouped by bar.
+    Decks 3 and 4 are only shown in 4 deck mode. The rows are in the same
+    order as the parallel waveforms and use the deck colors.
+-->
+<Template>
+  <WidgetGroup>
+    <ObjectName>PhaseDisplay</ObjectName>
+    <Layout>vertical</Layout>
+    <Size>256f,24f</Size>
+    <Children>
+      <Template src="skin:phase_display_row.xml">
+        <SetVariable name="i">3</SetVariable>
+        <SetVariable name="DeckColor">#B500B5</SetVariable>
+        <SetVariable name="VisibleKey">[Skin],show_4decks</SetVariable>
+      </Template>
+      <Template src="skin:phase_display_row.xml">
+        <SetVariable name="i">1</SetVariable>
+        <SetVariable name="DeckColor">#007BCD</SetVariable>
+        <SetVariable name="VisibleKey">[Skin],show_phase_display</SetVariable>
+      </Template>
+      <Template src="skin:phase_display_row.xml">
+        <SetVariable name="i">2</SetVariable>
+        <SetVariable name="DeckColor">#E67A00</SetVariable>
+        <SetVariable name="VisibleKey">[Skin],show_phase_display</SetVariable>
+      </Template>
+      <Template src="skin:phase_display_row.xml">
+        <SetVariable name="i">4</SetVariable>
+        <SetVariable name="DeckColor">#AABD00</SetVariable>
+        <SetVariable name="VisibleKey">[Skin],show_4decks</SetVariable>
+      </Template>
+    </Children>
+    <Connection>
+      <ConfigKey>[Skin],show_phase_display</ConfigKey>
+      <BindProperty>visible</BindProperty>
+    </Connection>
+  </WidgetGroup>
+</Template>
