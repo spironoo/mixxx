@@ -40,8 +40,13 @@ WaveformBarMarkers::Type WaveformBarMarkers::typeOf(int beatIndex) const {
 
 namespace {
 
+// The opacity drops fastest when the spacing falls below fullSpacing, so the
+// lines get out of the way quickly once they get dense, and then trail off
+// towards hiddenSpacing.
 float fade(float spacing, float hiddenSpacing, float fullSpacing) {
-    return std::clamp((spacing - hiddenSpacing) / (fullSpacing - hiddenSpacing), 0.f, 1.f);
+    const float linear = std::clamp(
+            (spacing - hiddenSpacing) / (fullSpacing - hiddenSpacing), 0.f, 1.f);
+    return linear * linear;
 }
 
 } // namespace

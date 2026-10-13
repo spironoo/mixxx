@@ -97,9 +97,10 @@ TEST(BarsTest, LinesFadeOutByBarsAndPhrases) {
     EXPECT_FLOAT_EQ(1.f, markers.lineOpacity(kBar, Markers::kLineFullSpacing));
     EXPECT_FLOAT_EQ(1.f, markers.lineOpacity(kPhrase, Markers::kLineFullSpacing));
 
-    // Lines of beats within a bar fade out first.
+    // Lines of beats within a bar fade out first, fastest at the start: half
+    // way between the thresholds, only a quarter of the opacity is left.
     const float halfFaded = (Markers::kLineFullSpacing + Markers::kLineHiddenSpacing) / 2;
-    EXPECT_FLOAT_EQ(0.5f, markers.lineOpacity(kBeat, halfFaded));
+    EXPECT_FLOAT_EQ(0.25f, markers.lineOpacity(kBeat, halfFaded));
     EXPECT_FLOAT_EQ(1.f, markers.lineOpacity(kBar, halfFaded));
 
     // Then the lines of bars, leaving the lines of phrases.
