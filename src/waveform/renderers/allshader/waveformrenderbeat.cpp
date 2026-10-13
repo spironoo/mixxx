@@ -3,6 +3,8 @@
 #include <QDomNode>
 #include <algorithm>
 #include <cmath>
+#include <iterator>
+#include <limits>
 
 #include "engine/engine.h"
 #include "moc_waveformrenderbeat.cpp"
@@ -134,14 +136,38 @@ bool WaveformRenderBeat::preprocessInner() {
     if (firstBeatIt == trackBeats->cbegin() || firstBeatIt == trackBeats->cend()) {
         return false;
     }
-    // Beat indices are only needed for bar and phrase markers. Looking them up
-    // can be expensive for beat maps, so it's only done for the first beat.
-    const int firstBeatIndex = m_barMarkers.isEnabled()
+    auto beatX = [&](mixxx::audio::FramePos position) {
+        return m_waveformRenderer->transformSamplePositionInRendererWorld(
+                position.toEngineSamplePos(), positionType);
+    };
+
+    // When zoomed out, the lines and marks of beats that are too close to
+    // each other fade out.
+    float beatSpacing = std::numeric_limits<float>::max();
+    if (const auto nextBeatIt = std::next(firstBeatIt); nextBeatIt != trackBeats->cend()) {
+        beatSpacing = static_cast<float>(std::abs(beatX(*nextBeatIt) - beatX(*firstBeatIt)));
+    }
+    const bool thinOutLines = beatSpacing < WaveformBarMarkers::kLineFullSpacing;
+
+    // Beat indices are only needed for bar and phrase markers and to thin out
+    // the lines. Looking them up can be expensive for beat maps, so it's only
+    // done for the first beat.
+    const int firstBeatIndex = m_barMarkers.needsBeatIndices(beatSpacing)
             ? trackBeats->beatIndexOf(firstBeatIt)
             : 0;
     auto markerType = [&](int beatIndex) {
         return m_barMarkers.isEnabled() ? m_barMarkers.typeOf(beatIndex)
                                         : WaveformBarMarkers::Type::Beat;
+    };
+    auto lineOpacity = [&](int beatIndex) {
+        return thinOutLines ? m_barMarkers.lineOpacity(beatIndex, beatSpacing) : 1.f;
+    };
+    auto markOpacity = [&](int beatIndex) {
+        return WaveformBarMarkers::markOpacity(markerType(beatIndex), beatSpacing);
+    };
+    auto withOpacity = [](QVector4D rgba, float opacity) {
+        rgba.setW(rgba.w() * opacity);
+        return rgba;
     };
 
     const bool splitStemBoxes = m_isSlipRenderer && splitStemTracks;
@@ -163,8 +189,10 @@ bool WaveformRenderBeat::preprocessInner() {
     for (auto it = firstBeatIt;
             it != trackBeats->cend() && *it <= endPosition;
             ++it, ++beatIndex) {
-        reserved += kNumVerticesPerRectangle * numBoxesPerBeat;
-        if (markerType(beatIndex) != WaveformBarMarkers::Type::Beat) {
+        if (lineOpacity(beatIndex) > 0.f) {
+            reserved += kNumVerticesPerRectangle * numBoxesPerBeat;
+        }
+        if (markOpacity(beatIndex) > 0.f) {
             reserved += numVerticesPerMark * numMarksPerBar;
         }
     }
@@ -182,49 +210,50 @@ bool WaveformRenderBeat::preprocessInner() {
     for (auto it = firstBeatIt;
             it != trackBeats->cend() && *it <= endPosition;
             ++it, ++beatIndex) {
-        double beatPosition = it->toEngineSamplePos();
-        double xBeatPoint =
-                m_waveformRenderer->transformSamplePositionInRendererWorld(
-                        beatPosition, positionType);
-
-        xBeatPoint = qRound(xBeatPoint * devicePixelRatio) / devicePixelRatio;
-
-        const float x1 = static_cast<float>(xBeatPoint);
+        const float x1 = static_cast<float>(
+                qRound(beatX(*it) * devicePixelRatio) / devicePixelRatio);
         const float x2 = x1 + 1.f;
 
-        if (splitStemBoxes) {
-            for (int stemIdx = 0; stemIdx < mixxx::kMaxSupportedStems; ++stemIdx) {
-                const float posy1 = stemIdx * boxBreadth;
-                const float posy2 = posy1 + boxBreadth / 2.f;
-                vertexUpdater.addRectangle({x1, posy1}, {x2, posy2}, beatRgba);
+        const float lineAlpha = lineOpacity(beatIndex);
+        if (lineAlpha > 0.f) {
+            const QVector4D lineRgba = withOpacity(beatRgba, lineAlpha);
+            if (splitStemBoxes) {
+                for (int stemIdx = 0; stemIdx < mixxx::kMaxSupportedStems; ++stemIdx) {
+                    const float posy1 = stemIdx * boxBreadth;
+                    const float posy2 = posy1 + boxBreadth / 2.f;
+                    vertexUpdater.addRectangle({x1, posy1}, {x2, posy2}, lineRgba);
+                }
+            } else {
+                vertexUpdater.addRectangle({x1, 0.f},
+                        {x2, m_isSlipRenderer ? rendererBreadth / 2 : rendererBreadth},
+                        lineRgba);
             }
-        } else {
-            vertexUpdater.addRectangle({x1, 0.f},
-                    {x2, m_isSlipRenderer ? rendererBreadth / 2 : rendererBreadth},
-                    beatRgba);
         }
 
-        const WaveformBarMarkers::Type type = markerType(beatIndex);
-        if (type == WaveformBarMarkers::Type::Beat) {
+        const float markAlpha = markOpacity(beatIndex);
+        if (markAlpha <= 0.f) {
             continue;
         }
+        const WaveformBarMarkers::Type type = markerType(beatIndex);
+        const QVector4D markRgba = withOpacity(barRgba, markAlpha);
+        const QVector4D outlineRgba = withOpacity(markOutlineRgba, markAlpha);
         // Center the marks on the beat line and keep them on whole pixels
         const float markX1 = x1 - std::floor((markWidth - 1.f) / 2.f);
         const float markX2 = markX1 + markWidth;
         const float markLength = WaveformBarMarkers::markLength(type, markBreadth);
         vertexUpdater.addRectangle({markX1 - markOutlineWidth, 0.f},
                 {markX2 + markOutlineWidth, markLength + markOutlineWidth},
-                markOutlineRgba);
-        vertexUpdater.addRectangle({markX1, 0.f}, {markX2, markLength}, barRgba);
+                outlineRgba);
+        vertexUpdater.addRectangle({markX1, 0.f}, {markX2, markLength}, markRgba);
         if (!m_isSlipRenderer) {
             vertexUpdater.addRectangle(
                     {markX1 - markOutlineWidth,
                             rendererBreadth - markLength - markOutlineWidth},
                     {markX2 + markOutlineWidth, rendererBreadth},
-                    markOutlineRgba);
+                    outlineRgba);
             vertexUpdater.addRectangle({markX1, rendererBreadth - markLength},
                     {markX2, rendererBreadth},
-                    barRgba);
+                    markRgba);
         }
     }
     markDirtyGeometry();
