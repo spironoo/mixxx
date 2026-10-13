@@ -41,11 +41,11 @@ class WaveformBarMarkers {
 
     /// Spacing in pixels from which lines are drawn fully, and below which
     /// they are hidden.
-    static constexpr float kLineFullSpacing = 10.f;
-    static constexpr float kLineHiddenSpacing = 4.f;
+    static constexpr float kLineFullSpacing = 11.f;
+    static constexpr float kLineHiddenSpacing = 4.4f;
     /// Same for the marks, which are wider than the lines.
-    static constexpr float kMarkFullSpacing = 28.f;
-    static constexpr float kMarkHiddenSpacing = 14.f;
+    static constexpr float kMarkFullSpacing = 30.8f;
+    static constexpr float kMarkHiddenSpacing = 15.4f;
 
     /// Length of the marks at each edge of the waveform, measured from the
     /// edge. `breadth` is the height of a horizontal waveform.
