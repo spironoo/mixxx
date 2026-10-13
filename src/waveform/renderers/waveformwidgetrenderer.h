@@ -21,10 +21,23 @@ class Context;
 
 class WaveformWidgetRenderer {
   public:
+    // The zoom factor is the number of visual samples per pixel, so smaller
+    // values zoom in. s_waveformMinZoom and s_waveformMaxZoom are the built-in
+    // zoom range, which the user can change to any range within
+    // s_waveformZoomLimitMin and s_waveformZoomLimitMax.
     static const double s_waveformMinZoom;
     static const double s_waveformMaxZoom;
     static const double s_waveformDefaultZoom;
+    static const double s_waveformZoomLimitMin;
+    static const double s_waveformZoomLimitMax;
     static const double s_defaultPlayMarkerPosition;
+
+    /// Sets the zoom range used by all waveforms. The values are clamped to
+    /// the zoom limits, and swapped if min is larger than max.
+    static void setZoomRange(double minZoom, double maxZoom);
+    static double getZoomRangeMin();
+    static double getZoomRangeMax();
+    static double clampZoom(double zoom);
 
     struct WaveformMarkOnScreen {
         WaveformMarkPointer m_pMark;

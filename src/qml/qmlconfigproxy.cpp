@@ -68,6 +68,8 @@ const QString kOverviewStereoKey = QStringLiteral("overview_stereo_mode");
 const QString kOverviewMinuteMarkersKey =
         QStringLiteral("draw_overview_minute_markers");
 const QString kDefaultZoomKey = QStringLiteral("DefaultZoom");
+const QString kZoomRangeMinKey = QStringLiteral("ZoomRangeMin");
+const QString kZoomRangeMaxKey = QStringLiteral("ZoomRangeMax");
 const QString kFrameRateKey = QStringLiteral("FrameRate");
 const QString kPlayMarkerPositionKey = QStringLiteral("PlayMarkerPosition");
 const QString kUntilMarkShowBeatsKey = QStringLiteral("UntilMarkShowBeats");
@@ -178,6 +180,7 @@ void QmlConfigProxy::notifyWaveformSettingsChanged() {
     emit pConfig->waveformOverviewStereoChanged();
     emit pConfig->waveformOverviewMinuteMarkersChanged();
     emit pConfig->waveformDefaultZoomChanged();
+    emit pConfig->waveformZoomRangeChanged();
     emit pConfig->waveformPlayMarkerPositionChanged();
     emit pConfig->waveformEnabledChanged();
     emit pConfig->waveformFrameRateChanged();
@@ -391,6 +394,32 @@ void QmlConfigProxy::set_waveformDefaultZoom(double value) {
             value,
             3,
             &QmlConfigProxy::waveformDefaultZoomChanged);
+}
+double QmlConfigProxy::waveformZoomRangeMin() const {
+    return WaveformWidgetRenderer::getZoomRangeMin();
+}
+void QmlConfigProxy::set_waveformZoomRangeMin(double value) {
+    setWaveformZoomRange(value, WaveformWidgetRenderer::getZoomRangeMax());
+}
+double QmlConfigProxy::waveformZoomRangeMax() const {
+    return WaveformWidgetRenderer::getZoomRangeMax();
+}
+void QmlConfigProxy::set_waveformZoomRangeMax(double value) {
+    setWaveformZoomRange(WaveformWidgetRenderer::getZoomRangeMin(), value);
+}
+void QmlConfigProxy::setWaveformZoomRange(double minZoom, double maxZoom) {
+    if (WaveformWidgetFactory::isCreated()) {
+        WaveformWidgetFactory::instance()->setZoomRange(minZoom, maxZoom);
+    } else {
+        WaveformWidgetRenderer::setZoomRange(minZoom, maxZoom);
+        m_pConfig->setValue(ConfigKey(kWaveformGroup, kZoomRangeMinKey),
+                WaveformWidgetRenderer::getZoomRangeMin());
+        m_pConfig->setValue(ConfigKey(kWaveformGroup, kZoomRangeMaxKey),
+                WaveformWidgetRenderer::getZoomRangeMax());
+    }
+    emit waveformZoomRangeChanged();
+    // The default zoom may have been clamped to the new range.
+    emit waveformDefaultZoomChanged();
 }
 PROPERTY_IMPL_GETTER(kWaveformGroup, kFrameRateKey, int, waveformFrameRate, 60);
 void QmlConfigProxy::set_waveformFrameRate(int frameRate) {

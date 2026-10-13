@@ -44,7 +44,8 @@ class DlgPrefWaveform : public DlgPreferencePage, public Ui::DlgPrefWaveformDlg 
         slotSetWaveformOptions(WaveformRendererSignalBase::Option::HighDetail, checked);
     }
 #endif
-    void slotSetDefaultZoom(int index);
+    void slotSetDefaultZoom(double percent);
+    void slotSetZoomRange();
     void slotSetZoomSynchronization(bool checked);
     void slotSetVisualGainAll(double gain);
     void slotSetVisualGainLow(double gain);
@@ -71,6 +72,7 @@ class DlgPrefWaveform : public DlgPreferencePage, public Ui::DlgPrefWaveformDlg 
 
   private:
     void initWaveformControl();
+    void updateZoomWidgets();
     void calculateCachedWaveformDiskUsage();
     void notifyRebootNecessary();
     void updateEnableUntilMark();

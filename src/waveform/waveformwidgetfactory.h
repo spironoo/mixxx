@@ -230,6 +230,11 @@ class WaveformWidgetFactory : public QObject,
             WaveformWidgetType::Type* pCurrentType);
 
   public:
+    /// Sets the range the waveforms can be zoomed in, see
+    /// WaveformWidgetRenderer::setZoomRange().
+    void setZoomRange(double minZoom, double maxZoom);
+    double getZoomRangeMin() const;
+    double getZoomRangeMax() const;
     void setDefaultZoom(double zoom);
     double getDefaultZoom() const { return m_defaultZoom;}
 

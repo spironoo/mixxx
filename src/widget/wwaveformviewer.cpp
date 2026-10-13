@@ -7,6 +7,7 @@
 #include "moc_wwaveformviewer.cpp"
 #include "util/dnd.h"
 #include "util/math.h"
+#include "waveform/renderers/waveformwidgetrenderer.h"
 #include "waveform/waveformwidgetfactory.h"
 #include "waveform/widgets/waveformwidgetabstract.h"
 #include "widget/wcuemenupopup.h"
@@ -257,6 +258,7 @@ void WWaveformViewer::onZoomChange(double zoom) {
 
 void WWaveformViewer::setZoom(double zoom) {
     //qDebug() << "WaveformWidgetRenderer::setZoom" << zoom;
+    zoom = WaveformWidgetRenderer::clampZoom(zoom);
     if (m_waveformWidget) {
         m_waveformWidget->setZoom(zoom);
     }

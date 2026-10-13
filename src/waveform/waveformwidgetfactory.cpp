@@ -86,6 +86,10 @@ const ConfigKey kEndOfTrackWarningKey = ConfigKey(
         kWaveformGroup, QStringLiteral("EndOfTrackWarningTime"));
 const ConfigKey kDefaultZoomKey =
         ConfigKey(kWaveformGroup, QStringLiteral("DefaultZoom"));
+const ConfigKey kZoomRangeMinKey =
+        ConfigKey(kWaveformGroup, QStringLiteral("ZoomRangeMin"));
+const ConfigKey kZoomRangeMaxKey =
+        ConfigKey(kWaveformGroup, QStringLiteral("ZoomRangeMax"));
 const ConfigKey kFrameRateKey =
         ConfigKey(kWaveformGroup, QStringLiteral("FrameRate"));
 const ConfigKey kVSyncKey = ConfigKey(kWaveformGroup, QStringLiteral("VSync"));
@@ -414,6 +418,12 @@ bool WaveformWidgetFactory::setConfig(UserSettingsPointer config) {
     } else {
         m_config->setValue(kEndOfTrackWarningKey, m_endOfTrackWarningTime);
     }
+
+    // The zoom range must be set before the default zoom, which is clamped to it.
+    setZoomRange(m_config->getValue(kZoomRangeMinKey,
+                         WaveformWidgetRenderer::s_waveformMinZoom),
+            m_config->getValue(kZoomRangeMaxKey,
+                    WaveformWidgetRenderer::s_waveformMaxZoom));
 
     double defaultZoom = m_config->getValueString(kDefaultZoomKey).toDouble(&ok);
     if (ok) {
@@ -749,10 +759,42 @@ WaveformWidgetBackend WaveformWidgetFactory::setAcceleration(bool enabled) {
     return backend;
 }
 
+void WaveformWidgetFactory::setZoomRange(double minZoom, double maxZoom) {
+    WaveformWidgetRenderer::setZoomRange(minZoom, maxZoom);
+    if (m_config) {
+        m_config->setValue(kZoomRangeMinKey, WaveformWidgetRenderer::getZoomRangeMin());
+        m_config->setValue(kZoomRangeMaxKey, WaveformWidgetRenderer::getZoomRangeMax());
+    }
+
+    // Keep the default zoom within the range, without applying it.
+    const double defaultZoom = WaveformWidgetRenderer::clampZoom(m_defaultZoom);
+    if (defaultZoom != m_defaultZoom) {
+        m_defaultZoom = defaultZoom;
+        if (m_config) {
+            m_config->setValue(kDefaultZoomKey, m_defaultZoom);
+        }
+    }
+
+    // Move waveforms that are now zoomed beyond the range back into it.
+    for (const auto& holder : std::as_const(m_waveformWidgetHolders)) {
+        const double zoom = holder.m_waveformWidget->getZoom();
+        const double clampedZoom = WaveformWidgetRenderer::clampZoom(zoom);
+        if (clampedZoom != zoom) {
+            holder.m_waveformViewer->setZoom(clampedZoom);
+        }
+    }
+}
+
+double WaveformWidgetFactory::getZoomRangeMin() const {
+    return WaveformWidgetRenderer::getZoomRangeMin();
+}
+
+double WaveformWidgetFactory::getZoomRangeMax() const {
+    return WaveformWidgetRenderer::getZoomRangeMax();
+}
+
 void WaveformWidgetFactory::setDefaultZoom(double zoom) {
-    m_defaultZoom = math_clamp(zoom,
-            WaveformWidgetRenderer::s_waveformMinZoom,
-            WaveformWidgetRenderer::s_waveformMaxZoom);
+    m_defaultZoom = WaveformWidgetRenderer::clampZoom(zoom);
     if (m_config) {
         m_config->setValue(kDefaultZoomKey, m_defaultZoom);
     }

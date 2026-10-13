@@ -48,6 +48,8 @@ Category {
         var options = Mixxx.Config.waveformOptions;
         splitStereoSignalInput.selected = (options & Mixxx.WaveformDisplay.Option.SplitStereoSignal) ? "on" : "off";
         highDetailInput.selected = (options & Mixxx.WaveformDisplay.Option.HighDetail) ? "on" : "off";
+        zoomRangeMinInput.value = Mixxx.Config.waveformZoomRangeMin;
+        zoomRangeMaxInput.value = Mixxx.Config.waveformZoomRangeMax;
         defaultZoomInput.value = Mixxx.Config.waveformDefaultZoom;
         endOfTrackWarningInput.value = Mixxx.Config.waveformEndOfTrackWarningTime;
         beatGridAlphaInput.value = Mixxx.Config.waveformBeatGridAlpha;
@@ -83,6 +85,8 @@ Category {
         frameRateInput.value = 60;
         splitStereoSignalInput.selected = "off";
         highDetailInput.selected = "off";
+        zoomRangeMinInput.value = 1;
+        zoomRangeMaxInput.value = 10;
         defaultZoomInput.value = 3;
         endOfTrackWarningInput.value = 30;
         beatGridAlphaInput.value = 90;
@@ -118,6 +122,8 @@ Category {
         if (highDetailInput.selected === "on")
             options |= Mixxx.WaveformDisplay.Option.HighDetail;
         Mixxx.Config.waveformOptions = options;
+        // The range must be saved first, the default zoom is clamped to it.
+        Mixxx.Config.setWaveformZoomRange(zoomRangeMinInput.value, zoomRangeMaxInput.value);
         Mixxx.Config.waveformDefaultZoom = defaultZoomInput.value;
         Mixxx.Config.waveformEndOfTrackWarningTime = endOfTrackWarningInput.value;
         Mixxx.Config.waveformBeatGridAlpha = beatGridAlphaInput.value;
@@ -299,12 +305,34 @@ Category {
                 }
             }
             WaveformSliderRow {
-                id: defaultZoomInput
+                id: zoomRangeMinInput
+
+                decimals: 1
+                label: "Closest zoom"
+                max: 10
+                min: 0.1
+                suffix: "x"
+
+                onValueChanged: root.markDirty()
+            }
+            WaveformSliderRow {
+                id: zoomRangeMaxInput
 
                 decimals: 0
-                label: "Default zoom"
-                max: 10
+                label: "Widest zoom"
+                max: 100
                 min: 1
+                suffix: "x"
+
+                onValueChanged: root.markDirty()
+            }
+            WaveformSliderRow {
+                id: defaultZoomInput
+
+                decimals: 1
+                label: "Default zoom"
+                max: Math.max(zoomRangeMinInput.value, zoomRangeMaxInput.value)
+                min: Math.min(zoomRangeMinInput.value, zoomRangeMaxInput.value)
                 suffix: "x"
 
                 onValueChanged: root.markDirty()
