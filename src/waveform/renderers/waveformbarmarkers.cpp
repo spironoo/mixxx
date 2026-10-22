@@ -10,10 +10,9 @@ void WaveformBarMarkers::update(const QString& group, const mixxx::Beats& beats)
         m_showBars = pFactory->showBarMarkers();
         m_showPhrases = pFactory->showPhraseMarkers();
     }
-    if (!isEnabled()) {
-        return;
-    }
 
+    // The downbeat is also needed without markers, to thin out dense beat
+    // grids by bars and phrases.
     if (!m_pIntroStartPosition || group != m_group) {
         m_group = group;
         m_pIntroStartPosition.emplace(group,
@@ -37,6 +36,46 @@ WaveformBarMarkers::Type WaveformBarMarkers::typeOf(int beatIndex) const {
         return Type::Bar;
     }
     return Type::Beat;
+}
+
+namespace {
+
+// The opacity drops fastest when the spacing falls below fullSpacing, so the
+// lines get out of the way quickly once they get dense, and then trail off
+// towards hiddenSpacing.
+float fade(float spacing, float hiddenSpacing, float fullSpacing) {
+    const float linear = std::clamp(
+            (spacing - hiddenSpacing) / (fullSpacing - hiddenSpacing), 0.f, 1.f);
+    return linear * linear;
+}
+
+} // namespace
+
+float WaveformBarMarkers::lineOpacity(int beatIndex, float beatSpacing) const {
+    float spacing = beatSpacing;
+    if (mixxx::bars::isPhraseStart(beatIndex, m_downbeatIndex)) {
+        spacing *= mixxx::bars::kBeatsPerPhrase;
+    } else if (mixxx::bars::isBarStart(beatIndex, m_downbeatIndex)) {
+        spacing *= mixxx::bars::kBeatsPerBar;
+    }
+    return fade(spacing, kLineHiddenSpacing, kLineFullSpacing);
+}
+
+// static
+float WaveformBarMarkers::markOpacity(Type type, float beatSpacing) {
+    switch (type) {
+    case Type::Phrase:
+        return fade(beatSpacing * mixxx::bars::kBeatsPerPhrase,
+                kMarkHiddenSpacing,
+                kMarkFullSpacing);
+    case Type::Bar:
+        return fade(beatSpacing * mixxx::bars::kBeatsPerBar,
+                kMarkHiddenSpacing,
+                kMarkFullSpacing);
+    case Type::Beat:
+        break;
+    }
+    return 0.f;
 }
 
 // static

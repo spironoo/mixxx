@@ -326,6 +326,18 @@ Item {
         key: "rate_ratio"
     }
     Mixxx.ControlProxy {
+        id: zoomInControl
+
+        group: root.zoomGroup
+        key: "waveform_zoom_down"
+    }
+    Mixxx.ControlProxy {
+        id: zoomOutControl
+
+        group: root.zoomGroup
+        key: "waveform_zoom_up"
+    }
+    Mixxx.ControlProxy {
         id: zoomControl
 
         group: root.zoomGroup
@@ -394,10 +406,14 @@ Item {
             mouseStatus = LateNightWaveformDisplay.MouseStatus.Normal;
         }
         onWheel: function (mouse) {
-            if (mouse.angleDelta.y < 0 && zoomControl.value > 1) {
-                zoomControl.value -= 1;
-            } else if (mouse.angleDelta.y > 0 && zoomControl.value < 10.0) {
-                zoomControl.value += 1;
+            // The zoom buttons keep the zoom within the range set in the
+            // preferences.
+            if (mouse.angleDelta.y < 0) {
+                zoomInControl.value = 1;
+                zoomInControl.value = 0;
+            } else if (mouse.angleDelta.y > 0) {
+                zoomOutControl.value = 1;
+                zoomOutControl.value = 0;
             }
         }
     }

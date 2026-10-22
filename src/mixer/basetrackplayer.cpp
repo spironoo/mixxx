@@ -2,6 +2,8 @@
 
 #include <QMessageBox>
 #include <QMetaMethod>
+#include <algorithm>
+#include <cmath>
 #include <memory>
 
 #include "control/controlencoder.h"
@@ -30,6 +32,34 @@ const QString kEffectGroupFormat = QStringLiteral("[EqualizerRack1_%1_Effect1]")
 
 inline double trackColorToDouble(mixxx::RgbColor::optional_t color) {
     return (color ? static_cast<double>(*color) : kNoTrackColor);
+}
+
+// Zoom steps for the waveform_zoom_up/down buttons. Between 1 and 10, the
+// built-in zoom range, the steps are 1 as before. Outside of it, where the
+// range can be extended in the preferences, the steps grow with the zoom.
+constexpr double kLinearZoomStepsMin = 1.0;
+constexpr double kLinearZoomStepsMax = 10.0;
+constexpr double kZoomInFactor = 2.0;
+constexpr double kZoomOutFactor = 1.25;
+
+double nextWaveformZoomOut(double zoom) {
+    if (zoom < kLinearZoomStepsMin) {
+        return std::min(zoom * kZoomInFactor, kLinearZoomStepsMin);
+    }
+    if (zoom < kLinearZoomStepsMax) {
+        return std::min(zoom + 1.0, kLinearZoomStepsMax);
+    }
+    return zoom * kZoomOutFactor;
+}
+
+double nextWaveformZoomIn(double zoom) {
+    if (zoom > kLinearZoomStepsMax) {
+        return std::max(zoom / kZoomOutFactor, kLinearZoomStepsMax);
+    }
+    if (zoom > kLinearZoomStepsMin) {
+        return std::max(zoom - 1.0, kLinearZoomStepsMin);
+    }
+    return zoom / kZoomInFactor;
 }
 } // namespace
 
@@ -996,10 +1026,10 @@ void BaseTrackPlayerImpl::setupEqControls() {
 }
 
 void BaseTrackPlayerImpl::slotWaveformZoomValueChangeRequest(double v) {
-    if (v <= WaveformWidgetRenderer::s_waveformMaxZoom
-            && v >= WaveformWidgetRenderer::s_waveformMinZoom) {
-        m_pWaveformZoom->setAndConfirm(v);
+    if (!std::isfinite(v)) {
+        return;
     }
+    m_pWaveformZoom->setAndConfirm(WaveformWidgetRenderer::clampZoom(v));
 }
 
 void BaseTrackPlayerImpl::slotWaveformZoomUp(double pressed) {
@@ -1007,7 +1037,7 @@ void BaseTrackPlayerImpl::slotWaveformZoomUp(double pressed) {
         return;
     }
 
-    m_pWaveformZoom->set(m_pWaveformZoom->get() + 1.0);
+    m_pWaveformZoom->set(nextWaveformZoomOut(m_pWaveformZoom->get()));
 }
 
 void BaseTrackPlayerImpl::slotWaveformZoomDown(double pressed) {
@@ -1015,7 +1045,7 @@ void BaseTrackPlayerImpl::slotWaveformZoomDown(double pressed) {
         return;
     }
 
-    m_pWaveformZoom->set(m_pWaveformZoom->get() - 1.0);
+    m_pWaveformZoom->set(nextWaveformZoomIn(m_pWaveformZoom->get()));
 }
 
 void BaseTrackPlayerImpl::slotWaveformZoomSetDefault(double pressed) {

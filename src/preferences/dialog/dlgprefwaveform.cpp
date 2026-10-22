@@ -2,6 +2,7 @@
 
 #include <QLocale>
 #include <QMetaEnum>
+#include <QSignalBlocker>
 #include <QtGlobal>
 #ifdef MIXXX_USE_QML
 #include <QQuickWindow>
@@ -26,6 +27,14 @@ namespace {
 const QString kWaveformGroup(QStringLiteral("[Waveform]"));
 const ConfigKey kOverviewTypeCfgKey(kWaveformGroup,
         QStringLiteral("WaveformOverviewType"));
+
+double zoomToPercent(double zoom) {
+    return 100.0 / zoom;
+}
+
+double percentToZoom(double percent) {
+    return 100.0 / percent;
+}
 
 #ifdef MIXXX_USE_QML
 QString quickGraphicsApiName() {
@@ -125,11 +134,13 @@ DlgPrefWaveform::DlgPrefWaveform(
     // Sort the combobox items alphabetically
     waveformTypeComboBox->model()->sort(0);
 
-    // Populate zoom options.
-    for (int i = static_cast<int>(WaveformWidgetRenderer::s_waveformMinZoom);
-            i <= static_cast<int>(WaveformWidgetRenderer::s_waveformMaxZoom);
-            i++) {
-        defaultZoomComboBox->addItem(QString::number(100 / static_cast<double>(i), 'f', 1) + " %");
+    // Zoom levels are shown as percentages, where 100 % is one visual sample
+    // per pixel. A larger zoom factor is a smaller percentage.
+    for (auto* pSpinBox : {defaultZoomSpinBox, zoomRangeMinSpinBox, zoomRangeMaxSpinBox}) {
+        pSpinBox->setStepType(QAbstractSpinBox::AdaptiveDecimalStepType);
+        pSpinBox->setRange(
+                zoomToPercent(WaveformWidgetRenderer::s_waveformZoomLimitMax),
+                zoomToPercent(WaveformWidgetRenderer::s_waveformZoomLimitMin));
     }
 
     const ConfigKey overviewStereoKey(
@@ -238,10 +249,18 @@ DlgPrefWaveform::DlgPrefWaveform(
             &QCheckBox::clicked,
             this,
             &DlgPrefWaveform::slotSetWaveformOptionHighDetail);
-    connect(defaultZoomComboBox,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
+    connect(defaultZoomSpinBox,
+            &QDoubleSpinBox::valueChanged,
             this,
             &DlgPrefWaveform::slotSetDefaultZoom);
+    connect(zoomRangeMinSpinBox,
+            &QDoubleSpinBox::valueChanged,
+            this,
+            &DlgPrefWaveform::slotSetZoomRange);
+    connect(zoomRangeMaxSpinBox,
+            &QDoubleSpinBox::valueChanged,
+            this,
+            &DlgPrefWaveform::slotSetZoomRange);
     connect(synchronizeZoomCheckBox,
             &QCheckBox::clicked,
             this,
@@ -410,8 +429,7 @@ void DlgPrefWaveform::slotUpdate() {
     lowVisualGain->setValue(pFactory->getVisualGain(BandIndex::Low));
     midVisualGain->setValue(pFactory->getVisualGain(BandIndex::Mid));
     highVisualGain->setValue(pFactory->getVisualGain(BandIndex::High));
-    // Round zoom to int to get a default zoom index.
-    defaultZoomComboBox->setCurrentIndex(static_cast<int>(pFactory->getDefaultZoom()) - 1);
+    updateZoomWidgets();
     playMarkerPositionSlider->setValue(static_cast<int>(pFactory->getPlayMarkerPosition() * 100));
     beatGridAlphaSpinBox->setValue(pFactory->getBeatGridAlpha());
     beatGridAlphaSlider->setValue(pFactory->getBeatGridAlpha());
@@ -510,8 +528,10 @@ void DlgPrefWaveform::slotResetToDefaults() {
     midVisualGain->setValue(WaveformWidgetFactory::getVisualGainDefault(BandIndex::Mid));
     highVisualGain->setValue(WaveformWidgetFactory::getVisualGainDefault(BandIndex::High));
 
-    // Default zoom level is 3 in WaveformWidgetFactory.
-    defaultZoomComboBox->setCurrentIndex(3 + 1);
+    pFactory->setZoomRange(WaveformWidgetRenderer::s_waveformMinZoom,
+            WaveformWidgetRenderer::s_waveformMaxZoom);
+    pFactory->setDefaultZoom(WaveformWidgetRenderer::s_waveformDefaultZoom);
+    updateZoomWidgets();
 
     synchronizeZoomCheckBox->setChecked(true);
 
@@ -726,7 +746,9 @@ void DlgPrefWaveform::updateWaveformGeneralOptionsEnabled() {
     showBarMarkersCheckBox->setEnabled(enabled);
     showPhraseMarkersCheckBox->setEnabled(enabled);
     playMarkerPositionSlider->setEnabled(enabled);
-    defaultZoomComboBox->setEnabled(enabled);
+    defaultZoomSpinBox->setEnabled(enabled);
+    zoomRangeMinSpinBox->setEnabled(enabled);
+    zoomRangeMaxSpinBox->setEnabled(enabled);
     synchronizeZoomCheckBox->setEnabled(enabled);
     updateWaveformGainEnabled();
     updateStemOptionsEnabled();
@@ -777,9 +799,36 @@ void DlgPrefWaveform::slotSetWaveformOverviewType() {
     notifyQmlWaveformSettingsChanged();
 }
 
-void DlgPrefWaveform::slotSetDefaultZoom(int index) {
-    WaveformWidgetFactory::instance()->setDefaultZoom(index + 1);
+void DlgPrefWaveform::slotSetDefaultZoom(double percent) {
+    WaveformWidgetFactory::instance()->setDefaultZoom(percentToZoom(percent));
     notifyQmlWaveformSettingsChanged();
+}
+
+void DlgPrefWaveform::slotSetZoomRange() {
+    // The closest zoom is the largest percentage, i.e. the smallest zoom factor.
+    WaveformWidgetFactory::instance()->setZoomRange(
+            percentToZoom(zoomRangeMinSpinBox->value()),
+            percentToZoom(zoomRangeMaxSpinBox->value()));
+    updateZoomWidgets();
+    notifyQmlWaveformSettingsChanged();
+}
+
+void DlgPrefWaveform::updateZoomWidgets() {
+    const auto* pFactory = WaveformWidgetFactory::instance();
+    const double closestPercent = zoomToPercent(pFactory->getZoomRangeMin());
+    const double widestPercent = zoomToPercent(pFactory->getZoomRangeMax());
+
+    // Changing the ranges or values must not apply the default zoom to the
+    // waveforms again, which would reset their current zoom.
+    const QSignalBlocker blockDefault(defaultZoomSpinBox);
+    const QSignalBlocker blockMin(zoomRangeMinSpinBox);
+    const QSignalBlocker blockMax(zoomRangeMaxSpinBox);
+    zoomRangeMinSpinBox->setMinimum(widestPercent);
+    zoomRangeMinSpinBox->setValue(closestPercent);
+    zoomRangeMaxSpinBox->setMaximum(closestPercent);
+    zoomRangeMaxSpinBox->setValue(widestPercent);
+    defaultZoomSpinBox->setRange(widestPercent, closestPercent);
+    defaultZoomSpinBox->setValue(zoomToPercent(pFactory->getDefaultZoom()));
 }
 
 void DlgPrefWaveform::slotSetZoomSynchronization(bool checked) {

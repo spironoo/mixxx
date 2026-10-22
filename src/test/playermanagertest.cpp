@@ -4,6 +4,7 @@
 #include <gsl/pointers>
 
 #include "control/controlindicatortimer.h"
+#include "control/controlproxy.h"
 #include "database/mixxxdb.h"
 #include "effects/effectsmanager.h"
 #include "engine/channels/enginedeck.h"
@@ -21,6 +22,7 @@
 #include "test/soundsourceproviderregistration.h"
 #include "track/track.h"
 #include "util/cmdlineargs.h"
+#include "waveform/renderers/waveformwidgetrenderer.h"
 #ifdef __RUBBERBAND__
 #include "engine/bufferscalers/rubberbandworkerpool.h"
 #endif
@@ -278,4 +280,65 @@ TEST_F(PlayerManagerTest, UnReplaceTest) {
     // First track should be reloaded
     ASSERT_NE(nullptr, deck1->getLoadedTrack());
     ASSERT_EQ(testId1, deck1->getLoadedTrack()->getId());
+}
+
+TEST_F(PlayerManagerTest, WaveformZoomStepsWithinRange) {
+    // Restore the built-in zoom range for other tests.
+    struct ZoomRangeGuard {
+        ~ZoomRangeGuard() {
+            WaveformWidgetRenderer::setZoomRange(
+                    WaveformWidgetRenderer::s_waveformMinZoom,
+                    WaveformWidgetRenderer::s_waveformMaxZoom);
+        }
+    } zoomRangeGuard;
+    WaveformWidgetRenderer::setZoomRange(0.25, 20.0);
+
+    ControlProxy zoom(QStringLiteral("[Channel1]"), QStringLiteral("waveform_zoom"));
+    ControlProxy zoomOut(QStringLiteral("[Channel1]"), QStringLiteral("waveform_zoom_up"));
+    ControlProxy zoomIn(QStringLiteral("[Channel1]"), QStringLiteral("waveform_zoom_down"));
+    auto press = [](ControlProxy* pButton) {
+        pButton->set(1.0);
+        pButton->set(0.0);
+    };
+
+    // Values outside of the range are clamped.
+    zoom.set(1000.0);
+    EXPECT_DOUBLE_EQ(20.0, zoom.get());
+    zoom.set(0.0);
+    EXPECT_DOUBLE_EQ(0.25, zoom.get());
+
+    // Below 1, the steps halve and double the zoom.
+    press(&zoomIn);
+    EXPECT_DOUBLE_EQ(0.25, zoom.get());
+    press(&zoomOut);
+    EXPECT_DOUBLE_EQ(0.5, zoom.get());
+    press(&zoomOut);
+    EXPECT_DOUBLE_EQ(1.0, zoom.get());
+
+    // Between 1 and 10, the steps are 1 as before.
+    press(&zoomOut);
+    EXPECT_DOUBLE_EQ(2.0, zoom.get());
+    zoom.set(9.0);
+    press(&zoomOut);
+    EXPECT_DOUBLE_EQ(10.0, zoom.get());
+
+    // Above 10, the steps grow with the zoom.
+    press(&zoomOut);
+    EXPECT_DOUBLE_EQ(12.5, zoom.get());
+    press(&zoomIn);
+    EXPECT_DOUBLE_EQ(10.0, zoom.get());
+    zoom.set(19.0);
+    press(&zoomOut);
+    EXPECT_DOUBLE_EQ(20.0, zoom.get());
+
+    // The built-in range still limits the zoom to 1..10.
+    WaveformWidgetRenderer::setZoomRange(
+            WaveformWidgetRenderer::s_waveformMinZoom,
+            WaveformWidgetRenderer::s_waveformMaxZoom);
+    zoom.set(1.0);
+    press(&zoomIn);
+    EXPECT_DOUBLE_EQ(1.0, zoom.get());
+    zoom.set(10.0);
+    press(&zoomOut);
+    EXPECT_DOUBLE_EQ(10.0, zoom.get());
 }

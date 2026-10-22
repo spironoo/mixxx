@@ -62,9 +62,14 @@ class QmlConfigProxy : public QmlConfigProxyBase {
                     waveformOverviewMinuteMarkers WRITE
                             set_waveformOverviewMinuteMarkers NOTIFY
                                     waveformOverviewMinuteMarkersChanged);
-    // 1..10
+    // Within waveformZoomRangeMin..waveformZoomRangeMax
     Q_PROPERTY(double waveformDefaultZoom READ waveformDefaultZoom WRITE
                     set_waveformDefaultZoom NOTIFY waveformDefaultZoomChanged);
+    // 0.1..100, defaults 1 and 10
+    Q_PROPERTY(double waveformZoomRangeMin READ waveformZoomRangeMin WRITE
+                    set_waveformZoomRangeMin NOTIFY waveformZoomRangeChanged);
+    Q_PROPERTY(double waveformZoomRangeMax READ waveformZoomRangeMax WRITE
+                    set_waveformZoomRangeMax NOTIFY waveformZoomRangeChanged);
     // [0..1]
     Q_PROPERTY(double waveformPlayMarkerPosition READ waveformPlayMarkerPosition
                     WRITE set_waveformPlayMarkerPosition NOTIFY
@@ -367,8 +372,10 @@ class QmlConfigProxy : public QmlConfigProxyBase {
     PROPERTY_DECL_ACCESSOR(int, waveformOverviewType);
     PROPERTY_DECL_ACCESSOR(bool, waveformOverviewStereo);
     PROPERTY_DECL_ACCESSOR(bool, waveformOverviewMinuteMarkers);
-    // 1..10
+    // Within waveformZoomRangeMin..waveformZoomRangeMax
     PROPERTY_DECL_ACCESSOR(double, waveformDefaultZoom);
+    PROPERTY_DECL_ACCESSOR(double, waveformZoomRangeMin);
+    PROPERTY_DECL_ACCESSOR(double, waveformZoomRangeMax);
     // [0..1]
     PROPERTY_DECL_ACCESSOR(double, waveformPlayMarkerPosition);
     PROPERTY_DECL_ACCESSOR(bool, waveformEnabled);
@@ -486,6 +493,10 @@ class QmlConfigProxy : public QmlConfigProxyBase {
         return s_pUserSettings;
     }
 
+    /// Sets both ends of the waveform zoom range at once, so that the range is
+    /// never inverted in between.
+    Q_INVOKABLE void setWaveformZoomRange(double minZoom, double maxZoom);
+
     // Used by the shared QWidget preferences page when it updates waveform
     // settings while the QML scene graph is running.
     static void notifyWaveformSettingsChanged();
@@ -500,6 +511,7 @@ class QmlConfigProxy : public QmlConfigProxyBase {
     void waveformOverviewStereoChanged();
     void waveformOverviewMinuteMarkersChanged();
     void waveformDefaultZoomChanged();
+    void waveformZoomRangeChanged();
     void waveformPlayMarkerPositionChanged();
     void waveformEnabledChanged();
     void waveformFrameRateChanged();

@@ -2,6 +2,8 @@
 
 #include <QPainter>
 #include <QPainterPath>
+#include <atomic>
+#include <utility>
 
 #include "control/controlproxy.h"
 #include "track/track.h"
@@ -16,10 +18,20 @@
 const double WaveformWidgetRenderer::s_waveformMinZoom = 1.0;
 const double WaveformWidgetRenderer::s_waveformMaxZoom = 10.0;
 const double WaveformWidgetRenderer::s_waveformDefaultZoom = 3.0;
+// Below this, one visual sample is spread across more than 10 pixels. Above
+// this, drawing gets expensive because every visual sample on screen is read
+// for each frame.
+const double WaveformWidgetRenderer::s_waveformZoomLimitMin = 0.1;
+const double WaveformWidgetRenderer::s_waveformZoomLimitMax = 100.0;
 const double WaveformWidgetRenderer::s_defaultPlayMarkerPosition = 0.5;
 
 namespace {
 constexpr int kDefaultDimBrightThreshold = 127;
+
+// The zoom range is read from the GUI thread and from the threads that set the
+// waveform_zoom controls, e.g. the controller thread.
+std::atomic<double> s_zoomRangeMin{1.0};
+std::atomic<double> s_zoomRangeMax{10.0};
 } // namespace
 
 WaveformWidgetRenderer::WaveformWidgetRenderer(const QString& group)
@@ -441,9 +453,37 @@ void WaveformWidgetRenderer::setup(
     m_passthroughLabelColor = m_colors.getPassthroughLabelColor();
 }
 
+// static
+void WaveformWidgetRenderer::setZoomRange(double minZoom, double maxZoom) {
+    if (minZoom > maxZoom) {
+        std::swap(minZoom, maxZoom);
+    }
+    s_zoomRangeMin.store(
+            math_clamp(minZoom, s_waveformZoomLimitMin, s_waveformZoomLimitMax),
+            std::memory_order_relaxed);
+    s_zoomRangeMax.store(
+            math_clamp(maxZoom, s_waveformZoomLimitMin, s_waveformZoomLimitMax),
+            std::memory_order_relaxed);
+}
+
+// static
+double WaveformWidgetRenderer::getZoomRangeMin() {
+    return s_zoomRangeMin.load(std::memory_order_relaxed);
+}
+
+// static
+double WaveformWidgetRenderer::getZoomRangeMax() {
+    return s_zoomRangeMax.load(std::memory_order_relaxed);
+}
+
+// static
+double WaveformWidgetRenderer::clampZoom(double zoom) {
+    return math_clamp(zoom, getZoomRangeMin(), getZoomRangeMax());
+}
+
 void WaveformWidgetRenderer::setZoom(double zoom) {
     //qDebug() << "WaveformWidgetRenderer::setZoom" << zoom;
-    m_zoomFactor = math_clamp<double>(zoom, s_waveformMinZoom, s_waveformMaxZoom);
+    m_zoomFactor = clampZoom(zoom);
 }
 
 void WaveformWidgetRenderer::setDisplayBeatGridAlpha(int alpha) {

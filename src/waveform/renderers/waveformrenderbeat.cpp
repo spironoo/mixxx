@@ -2,6 +2,9 @@
 
 #include <QPainter>
 #include <algorithm>
+#include <cmath>
+#include <iterator>
+#include <limits>
 
 #include "track/track.h"
 #include "util/painterscope.h"
@@ -103,9 +106,24 @@ void WaveformRenderBeat::draw(QPainter* painter, QPaintEvent* /*event*/) {
     const double markWidth = WaveformBarMarkers::kMarkWidthFactor * beatLineWidth;
 
     m_barMarkers.update(m_waveformRenderer->getGroup(), *trackBeats);
+
+    // When zoomed out, the lines and marks of beats that are too close to
+    // each other are hidden. Unlike the allshader renderer, this renderer
+    // can't always draw transparent lines (see above), so they aren't faded.
+    float beatSpacing = std::numeric_limits<float>::max();
+    if (const auto nextIt = std::next(it); nextIt != trackBeats->cend()) {
+        beatSpacing = static_cast<float>(std::abs(
+                m_waveformRenderer->transformSamplePositionInRendererWorld(
+                        nextIt->toEngineSamplePos()) -
+                m_waveformRenderer->transformSamplePositionInRendererWorld(
+                        it->toEngineSamplePos())));
+    }
+    const bool thinOutLines = beatSpacing < WaveformBarMarkers::kLineFullSpacing;
+    constexpr float kMinOpacity = 0.5f;
+
     // Looking up beat indices can be expensive for beat maps, so it's only
     // done for the first beat.
-    int beatIndex = m_barMarkers.isEnabled() ? trackBeats->beatIndexOf(it) : 0;
+    int beatIndex = m_barMarkers.needsBeatIndices(beatSpacing) ? trackBeats->beatIndexOf(it) : 0;
 
     m_beats.clear();
     m_marks.clear();
@@ -116,10 +134,12 @@ void WaveformRenderBeat::draw(QPainter* painter, QPaintEvent* /*event*/) {
 
         xBeatPoint = qRound(xBeatPoint * devicePixelRatio) / devicePixelRatio;
 
-        if (orientation == Qt::Horizontal) {
-            m_beats.append(QLineF(xBeatPoint, 0.0f, xBeatPoint, rendererHeight));
-        } else {
-            m_beats.append(QLineF(0.0f, xBeatPoint, rendererWidth, xBeatPoint));
+        if (!thinOutLines || m_barMarkers.lineOpacity(beatIndex, beatSpacing) >= kMinOpacity) {
+            if (orientation == Qt::Horizontal) {
+                m_beats.append(QLineF(xBeatPoint, 0.0f, xBeatPoint, rendererHeight));
+            } else {
+                m_beats.append(QLineF(0.0f, xBeatPoint, rendererWidth, xBeatPoint));
+            }
         }
 
         // Like in rekordbox, the first beats of bars and phrases get marks
@@ -127,7 +147,7 @@ void WaveformRenderBeat::draw(QPainter* painter, QPaintEvent* /*event*/) {
         const WaveformBarMarkers::Type type = m_barMarkers.isEnabled()
                 ? m_barMarkers.typeOf(beatIndex)
                 : WaveformBarMarkers::Type::Beat;
-        if (type == WaveformBarMarkers::Type::Beat) {
+        if (WaveformBarMarkers::markOpacity(type, beatSpacing) < kMinOpacity) {
             continue;
         }
         const double markLength = WaveformBarMarkers::markLength(type, breadth);

@@ -8,6 +8,7 @@
 #include "track/bars.h"
 #include "track/beats.h"
 #include "track/cue.h"
+#include "waveform/renderers/waveformbarmarkers.h"
 
 using namespace mixxx;
 
@@ -81,6 +82,48 @@ TEST(BarsTest, BarAndPhraseStarts) {
     EXPECT_TRUE(bars::isPhraseStart(16, 0));
     EXPECT_TRUE(bars::isPhraseStart(-13, 3));
     EXPECT_FALSE(bars::isPhraseStart(4, 0));
+}
+
+TEST(BarsTest, LinesFadeOutByBarsAndPhrases) {
+    // Without a beat grid update, the downbeat is beat 0.
+    const WaveformBarMarkers markers;
+    using Markers = WaveformBarMarkers;
+    constexpr int kBeat = 1;
+    constexpr int kBar = 4;
+    constexpr int kPhrase = 16;
+
+    // Far enough apart, all lines are drawn fully.
+    EXPECT_FLOAT_EQ(1.f, markers.lineOpacity(kBeat, Markers::kLineFullSpacing));
+    EXPECT_FLOAT_EQ(1.f, markers.lineOpacity(kBar, Markers::kLineFullSpacing));
+    EXPECT_FLOAT_EQ(1.f, markers.lineOpacity(kPhrase, Markers::kLineFullSpacing));
+
+    // Lines of beats within a bar fade out first, fastest at the start: half
+    // way between the thresholds, only a quarter of the opacity is left.
+    const float halfFaded = (Markers::kLineFullSpacing + Markers::kLineHiddenSpacing) / 2;
+    EXPECT_FLOAT_EQ(0.25f, markers.lineOpacity(kBeat, halfFaded));
+    EXPECT_FLOAT_EQ(1.f, markers.lineOpacity(kBar, halfFaded));
+
+    // Then the lines of bars, leaving the lines of phrases.
+    const float barsHidden = Markers::kLineHiddenSpacing / 4;
+    EXPECT_FLOAT_EQ(0.f, markers.lineOpacity(kBeat, barsHidden));
+    EXPECT_FLOAT_EQ(0.f, markers.lineOpacity(kBar, barsHidden));
+    EXPECT_FLOAT_EQ(1.f, markers.lineOpacity(kPhrase, barsHidden));
+    EXPECT_FLOAT_EQ(0.f, markers.lineOpacity(kPhrase, Markers::kLineHiddenSpacing / 16));
+}
+
+TEST(BarsTest, MarksFadeOutByBarsAndPhrases) {
+    using Markers = WaveformBarMarkers;
+    using Type = Markers::Type;
+    EXPECT_FLOAT_EQ(0.f, Markers::markOpacity(Type::Beat, 100.f));
+
+    const float barsFull = Markers::kMarkFullSpacing / 4;
+    EXPECT_FLOAT_EQ(1.f, Markers::markOpacity(Type::Bar, barsFull));
+    EXPECT_FLOAT_EQ(1.f, Markers::markOpacity(Type::Phrase, barsFull));
+
+    const float barsHidden = Markers::kMarkHiddenSpacing / 4;
+    EXPECT_FLOAT_EQ(0.f, Markers::markOpacity(Type::Bar, barsHidden));
+    EXPECT_FLOAT_EQ(1.f, Markers::markOpacity(Type::Phrase, barsHidden));
+    EXPECT_FLOAT_EQ(0.f, Markers::markOpacity(Type::Phrase, Markers::kMarkHiddenSpacing / 16));
 }
 
 TEST(BarsTest, DownbeatIsUnsetByDefault) {

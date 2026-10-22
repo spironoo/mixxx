@@ -19,6 +19,12 @@
 ///
 /// Unlike in rekordbox, the waveform reaches the edges, so the marks get a
 /// dark outline to stay visible on top of it.
+///
+/// When the waveform is zoomed out so far that the beats get too close to
+/// each other, the beat lines would cover the waveform. The lines then fade
+/// out, starting with the lines of beats within a bar, followed by the lines
+/// of the first beats of bars, so that only the first beats of phrases are
+/// left. The marks fade out the same way.
 class WaveformBarMarkers {
   public:
     enum class Type {
@@ -32,6 +38,14 @@ class WaveformBarMarkers {
     /// Width of the dark outline around the marks relative to the beat line
     /// width
     static constexpr float kMarkOutlineWidthFactor = 1.f;
+
+    /// Spacing in pixels from which lines are drawn fully, and below which
+    /// they are hidden.
+    static constexpr float kLineFullSpacing = 11.f;
+    static constexpr float kLineHiddenSpacing = 4.4f;
+    /// Same for the marks, which are wider than the lines.
+    static constexpr float kMarkFullSpacing = 30.8f;
+    static constexpr float kMarkHiddenSpacing = 15.4f;
 
     /// Length of the marks at each edge of the waveform, measured from the
     /// edge. `breadth` is the height of a horizontal waveform.
@@ -58,6 +72,23 @@ class WaveformBarMarkers {
 
     /// Returns how the beat with index `beatIndex` should be drawn.
     Type typeOf(int beatIndex) const;
+
+    /// Whether the beat indices are needed for `typeOf()` or `lineOpacity()`
+    /// when beats are `beatSpacing` pixels apart. Looking them up can be
+    /// expensive for beat maps.
+    bool needsBeatIndices(float beatSpacing) const {
+        return isEnabled() || beatSpacing < kLineFullSpacing;
+    }
+
+    /// Opacity from 0 to 1 of the beat line of beat `beatIndex`, when beats
+    /// are `beatSpacing` pixels apart. This doesn't depend on the bar and
+    /// phrase preferences, so dense beat grids are thinned out by bars and
+    /// phrases even without markers.
+    float lineOpacity(int beatIndex, float beatSpacing) const;
+
+    /// Opacity from 0 to 1 of the marks of a beat of type `type`, when beats
+    /// are `beatSpacing` pixels apart.
+    static float markOpacity(Type type, float beatSpacing);
 
     /// Default color for skins that don't define a BarColor
     static QColor defaultBarColor();
