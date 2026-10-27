@@ -166,11 +166,13 @@ TEST(BarsTest, TriangleMarks) {
     constexpr float kBreadth = 96.f;
     constexpr float kOutlineWidth = 1.f;
 
-    // The triangles are as long as the rectangle marks and equilateral, so
-    // all sides are as long as the base.
+    // The triangles are as long as rectangle marks at the triangle scale and
+    // equilateral, so all sides are as long as the base.
     const Markers markers;
+    Markers rectangles;
+    rectangles.setScale(markers.triangleScale());
     const auto bar = markers.triangleMark(Type::Bar, kBreadth, kOutlineWidth);
-    EXPECT_FLOAT_EQ(markers.markLength(Type::Bar, kBreadth), bar.length);
+    EXPECT_FLOAT_EQ(rectangles.markLength(Type::Bar, kBreadth), bar.length);
     const float barSide = std::hypot(bar.halfWidth, bar.length);
     EXPECT_NEAR(2 * bar.halfWidth, barSide, 1e-4f);
 
@@ -182,8 +184,35 @@ TEST(BarsTest, TriangleMarks) {
 
     // Phrase marks are larger.
     const auto phrase = markers.triangleMark(Type::Phrase, kBreadth, kOutlineWidth);
-    EXPECT_FLOAT_EQ(markers.markLength(Type::Phrase, kBreadth), phrase.length);
+    EXPECT_FLOAT_EQ(rectangles.markLength(Type::Phrase, kBreadth), phrase.length);
     EXPECT_GT(phrase.halfWidth, bar.halfWidth);
+}
+
+TEST(BarsTest, TriangleScale) {
+    using Markers = WaveformBarMarkers;
+    using Type = Markers::Type;
+    constexpr float kBreadth = 96.f;
+    Markers markers;
+
+    // At the default size, triangles are drawn at 75 % of the rectangle size.
+    EXPECT_FLOAT_EQ(0.75f, markers.triangleScale());
+    markers.setScale(2.f);
+    EXPECT_FLOAT_EQ(1.5f, markers.triangleScale());
+
+    // They grow up to twice the rectangle size at the default size.
+    markers.setScale(Markers::kTriangleScaleMax / Markers::kTriangleScaleFactor);
+    EXPECT_FLOAT_EQ(Markers::kTriangleScaleMax, markers.triangleScale());
+    const auto largest = markers.triangleMark(Type::Bar, kBreadth, 1.f);
+    markers.setScale(3.f);
+    EXPECT_FLOAT_EQ(Markers::kTriangleScaleMax, markers.triangleScale());
+    EXPECT_FLOAT_EQ(largest.length, markers.triangleMark(Type::Bar, kBreadth, 1.f).length);
+
+    // Smaller triangles fade out later than rectangles of the same scale.
+    markers.setScale(1.f);
+    const float barSpacing = markers.triangleScale() * Markers::kMarkFullSpacing / 4;
+    EXPECT_LT(markers.markOpacity(Type::Bar, barSpacing), 1.f);
+    markers.setShape(BarMarkerShape::Triangle);
+    EXPECT_FLOAT_EQ(1.f, markers.markOpacity(Type::Bar, barSpacing));
 }
 
 TEST(BarsTest, DownbeatIsUnsetByDefault) {

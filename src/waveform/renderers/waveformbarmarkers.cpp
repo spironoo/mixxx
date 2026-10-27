@@ -64,8 +64,9 @@ float WaveformBarMarkers::lineOpacity(int beatIndex, float beatSpacing) const {
 }
 
 float WaveformBarMarkers::markOpacity(Type type, float beatSpacing) const {
-    const float hiddenSpacing = m_scale * kMarkHiddenSpacing;
-    const float fullSpacing = m_scale * kMarkFullSpacing;
+    const float scale = m_shape == BarMarkerShape::Triangle ? triangleScale() : m_scale;
+    const float hiddenSpacing = scale * kMarkHiddenSpacing;
+    const float fullSpacing = scale * kMarkFullSpacing;
     switch (type) {
     case Type::Phrase:
         return fade(beatSpacing * mixxx::bars::kBeatsPerPhrase, hiddenSpacing, fullSpacing);
@@ -84,7 +85,7 @@ WaveformBarMarkers::TriangleMark WaveformBarMarkers::triangleMark(
     constexpr float kSin30 = 0.5f;
     constexpr float kCos30 = 0.8660254f;
     constexpr float kTan30 = kSin30 / kCos30;
-    const float length = markLength(type, breadth);
+    const float length = markLengthAtScale(type, breadth, triangleScale());
     const float halfWidth = length * kTan30;
     // Moving the sides outwards by outlineWidth moves them sideways by
     // outlineWidth / cos(30) and the tip by outlineWidth / sin(30).

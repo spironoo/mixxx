@@ -60,23 +60,30 @@ class WaveformBarMarkers {
     void setScale(float scale) {
         m_scale = scale;
     }
+    /// Sets the shape of the marks. update() sets it from the preferences.
+    void setShape(BarMarkerShape shape) {
+        m_shape = shape;
+    }
 
-    /// Length of the marks at each edge of the waveform, measured from the
-    /// edge. `breadth` is the height of a horizontal waveform. The marks
-    /// never reach past the center of the waveform.
+    /// Size of the triangle marks relative to the rectangle marks at the
+    /// default size. Triangles are wider than rectangles, so they're drawn
+    /// smaller.
+    static constexpr float kTriangleScaleFactor = 0.75f;
+    /// Largest size of the triangle marks relative to the rectangle marks at
+    /// the default size
+    static constexpr float kTriangleScaleMax = 2.f;
+
+    /// Size of the triangle marks relative to the rectangle marks at the
+    /// default size, for the current scale()
+    float triangleScale() const {
+        return std::min(m_scale * kTriangleScaleFactor, kTriangleScaleMax);
+    }
+
+    /// Length of the rectangle marks at each edge of the waveform, measured
+    /// from the edge. `breadth` is the height of a horizontal waveform. The
+    /// marks never reach past the center of the waveform.
     float markLength(Type type, float breadth) const {
-        const float barMarkLength = std::min(
-                std::round(m_scale * std::clamp(std::round(breadth / 8.f), 4.f, 14.f)),
-                breadth / 2.f);
-        switch (type) {
-        case Type::Phrase:
-            return std::min(std::round(1.6f * barMarkLength), breadth / 2.f);
-        case Type::Bar:
-            return barMarkLength;
-        case Type::Beat:
-            break;
-        }
-        return 0.f;
+        return markLengthAtScale(type, breadth, m_scale);
     }
 
     /// Width of the rectangle marks in whole multiples of `beatLineWidth`
@@ -97,8 +104,8 @@ class WaveformBarMarkers {
     };
 
     /// Returns the size of a triangle mark of type `type`, with an outline
-    /// that is `outlineWidth` wide on all sides. The triangles are as long
-    /// as the rectangle marks and equilateral.
+    /// that is `outlineWidth` wide on all sides. The triangles are
+    /// equilateral and as long as rectangle marks at triangleScale().
     TriangleMark triangleMark(Type type, float breadth, float outlineWidth) const;
 
     /// Reads the current preferences. Must be called once per frame before
@@ -141,6 +148,21 @@ class WaveformBarMarkers {
     }
 
   private:
+    static float markLengthAtScale(Type type, float breadth, float scale) {
+        const float barMarkLength = std::min(
+                std::round(scale * std::clamp(std::round(breadth / 8.f), 4.f, 14.f)),
+                breadth / 2.f);
+        switch (type) {
+        case Type::Phrase:
+            return std::min(std::round(1.6f * barMarkLength), breadth / 2.f);
+        case Type::Bar:
+            return barMarkLength;
+        case Type::Beat:
+            break;
+        }
+        return 0.f;
+    }
+
     QString m_group;
     std::optional<PollingControlProxy> m_pIntroStartPosition;
     bool m_showBars = true;
