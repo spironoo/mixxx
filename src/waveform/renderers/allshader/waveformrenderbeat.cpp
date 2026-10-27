@@ -24,6 +24,7 @@ using namespace rendergraph;
 namespace {
 
 constexpr int kNumVerticesPerRectangle = 6; // 2 triangles
+constexpr int kNumVerticesPerTriangle = 3;
 
 QVector4D toVector4D(const QColor& color) {
     float r, g, b, a;
@@ -174,10 +175,12 @@ bool WaveformRenderBeat::preprocessInner() {
     const int numBoxesPerBeat = splitStemBoxes ? mixxx::kMaxSupportedStems : 1;
     // Like in rekordbox, the first beats of bars and phrases get marks at
     // both edges of the waveform, each drawn as an outline and a fill
-    // rectangle. The slip renderer only draws the upper half of the waveform,
-    // so it only gets the marks at the top.
+    // rectangle or triangle. The slip renderer only draws the upper half of
+    // the waveform, so it only gets the marks at the top.
+    const bool triangleMarks = m_barMarkers.shape() == BarMarkerShape::Triangle;
     const int numMarksPerBar = m_isSlipRenderer ? 1 : 2;
-    const int numVerticesPerMark = 2 * kNumVerticesPerRectangle;
+    const int numVerticesPerMark = 2 *
+            (triangleMarks ? kNumVerticesPerTriangle : kNumVerticesPerRectangle);
     const float markBreadth = m_isSlipRenderer ? rendererBreadth / 2.f : rendererBreadth;
 
     // Count the vertices needed for the beats in the range to reserve space.
@@ -237,6 +240,34 @@ bool WaveformRenderBeat::preprocessInner() {
         const WaveformBarMarkers::Type type = markerType(beatIndex);
         const QVector4D markRgba = withOpacity(barRgba, markAlpha);
         const QVector4D outlineRgba = withOpacity(markOutlineRgba, markAlpha);
+        if (triangleMarks) {
+            // The tips point towards the center of the waveform. The beat
+            // line is 1 pixel wide, so its center is half a pixel to the
+            // right of x1.
+            const float centerX = x1 + 0.5f;
+            const auto triangle = WaveformBarMarkers::triangleMark(
+                    type, markBreadth, markOutlineWidth);
+            vertexUpdater.addTriangle({centerX - triangle.outlineHalfWidth, 0.f},
+                    {centerX + triangle.outlineHalfWidth, 0.f},
+                    {centerX, triangle.outlineLength},
+                    outlineRgba);
+            vertexUpdater.addTriangle({centerX - triangle.halfWidth, 0.f},
+                    {centerX + triangle.halfWidth, 0.f},
+                    {centerX, triangle.length},
+                    markRgba);
+            if (!m_isSlipRenderer) {
+                vertexUpdater.addTriangle(
+                        {centerX - triangle.outlineHalfWidth, rendererBreadth},
+                        {centerX + triangle.outlineHalfWidth, rendererBreadth},
+                        {centerX, rendererBreadth - triangle.outlineLength},
+                        outlineRgba);
+                vertexUpdater.addTriangle({centerX - triangle.halfWidth, rendererBreadth},
+                        {centerX + triangle.halfWidth, rendererBreadth},
+                        {centerX, rendererBreadth - triangle.length},
+                        markRgba);
+            }
+            continue;
+        }
         // Center the marks on the beat line and keep them on whole pixels
         const float markX1 = x1 - std::floor((markWidth - 1.f) / 2.f);
         const float markX2 = markX1 + markWidth;

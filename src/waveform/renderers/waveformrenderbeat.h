@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QColor>
+#include <QPolygonF>
 
 #include "skin/legacy/skincontext.h"
 #include "util/class.h"
@@ -22,6 +23,9 @@ class WaveformRenderBeat : public WaveformRendererAbstract {
     QVector<QLineF> m_beats;
     // Marks at the edges of the first beats of bars and phrases
     QVector<QRectF> m_marks;
+    // The same marks when drawn as triangles, with their outlines
+    QVector<QPolygonF> m_triangleMarks;
+    QVector<QPolygonF> m_triangleMarkOutlines;
     WaveformBarMarkers m_barMarkers;
 
     DISALLOW_COPY_AND_ASSIGN(WaveformRenderBeat);

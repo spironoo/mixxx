@@ -226,6 +226,18 @@ DlgPrefWaveform::DlgPrefWaveform(
             [](bool checked) {
                 WaveformWidgetFactory::instance()->setShowPhraseMarkers(checked);
             });
+    barMarkerShapeComboBox->addItem(
+            tr("Rectangles"), QVariant::fromValue(static_cast<int>(BarMarkerShape::Rectangle)));
+    barMarkerShapeComboBox->addItem(
+            tr("Triangles"), QVariant::fromValue(static_cast<int>(BarMarkerShape::Triangle)));
+    connect(barMarkerShapeComboBox,
+            QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this,
+            [this](int index) {
+                WaveformWidgetFactory::instance()->setBarMarkerShape(
+                        static_cast<BarMarkerShape>(
+                                barMarkerShapeComboBox->itemData(index).toInt()));
+            });
 
     connect(useWaveformCheckBox,
             &QCheckBox::clicked,
@@ -435,6 +447,8 @@ void DlgPrefWaveform::slotUpdate() {
     beatGridAlphaSlider->setValue(pFactory->getBeatGridAlpha());
     showBarMarkersCheckBox->setChecked(pFactory->showBarMarkers());
     showPhraseMarkersCheckBox->setChecked(pFactory->showPhraseMarkers());
+    barMarkerShapeComboBox->setCurrentIndex(barMarkerShapeComboBox->findData(
+            QVariant::fromValue(static_cast<int>(pFactory->barMarkerShape()))));
 
     untilMarkShowBeatsCheckBox->setChecked(pFactory->getUntilMarkShowBeats());
     untilMarkShowTimeCheckBox->setChecked(pFactory->getUntilMarkShowTime());
@@ -562,6 +576,8 @@ void DlgPrefWaveform::slotResetToDefaults() {
 
     showBarMarkersCheckBox->setChecked(true);
     showPhraseMarkersCheckBox->setChecked(true);
+    barMarkerShapeComboBox->setCurrentIndex(barMarkerShapeComboBox->findData(
+            QVariant::fromValue(static_cast<int>(BarMarkerShape::Rectangle))));
 
     // 50 (center) is default
     playMarkerPositionSlider->setValue(50);
@@ -745,6 +761,7 @@ void DlgPrefWaveform::updateWaveformGeneralOptionsEnabled() {
     beatGridAlphaSpinBox->setEnabled(enabled);
     showBarMarkersCheckBox->setEnabled(enabled);
     showPhraseMarkersCheckBox->setEnabled(enabled);
+    barMarkerShapeComboBox->setEnabled(enabled);
     playMarkerPositionSlider->setEnabled(enabled);
     defaultZoomSpinBox->setEnabled(enabled);
     zoomRangeMinSpinBox->setEnabled(enabled);

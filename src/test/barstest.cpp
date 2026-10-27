@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <QTest>
+#include <cmath>
 #include <memory>
 
 #include "control/controlproxy.h"
@@ -124,6 +125,31 @@ TEST(BarsTest, MarksFadeOutByBarsAndPhrases) {
     EXPECT_FLOAT_EQ(0.f, Markers::markOpacity(Type::Bar, barsHidden));
     EXPECT_FLOAT_EQ(1.f, Markers::markOpacity(Type::Phrase, barsHidden));
     EXPECT_FLOAT_EQ(0.f, Markers::markOpacity(Type::Phrase, Markers::kMarkHiddenSpacing / 16));
+}
+
+TEST(BarsTest, TriangleMarks) {
+    using Markers = WaveformBarMarkers;
+    using Type = Markers::Type;
+    constexpr float kBreadth = 96.f;
+    constexpr float kOutlineWidth = 1.f;
+
+    // The triangles are as long as the rectangle marks and equilateral, so
+    // all sides are as long as the base.
+    const auto bar = Markers::triangleMark(Type::Bar, kBreadth, kOutlineWidth);
+    EXPECT_FLOAT_EQ(Markers::markLength(Type::Bar, kBreadth), bar.length);
+    const float barSide = std::hypot(bar.halfWidth, bar.length);
+    EXPECT_NEAR(2 * bar.halfWidth, barSide, 1e-4f);
+
+    // The outline is as wide on the sides as at the tip.
+    EXPECT_FLOAT_EQ(bar.length + 2 * kOutlineWidth, bar.outlineLength);
+    EXPECT_NEAR(bar.halfWidth + kOutlineWidth / std::cos(std::atan(1.f / std::sqrt(3.f))),
+            bar.outlineHalfWidth,
+            1e-4f);
+
+    // Phrase marks are larger.
+    const auto phrase = Markers::triangleMark(Type::Phrase, kBreadth, kOutlineWidth);
+    EXPECT_FLOAT_EQ(Markers::markLength(Type::Phrase, kBreadth), phrase.length);
+    EXPECT_GT(phrase.halfWidth, bar.halfWidth);
 }
 
 TEST(BarsTest, DownbeatIsUnsetByDefault) {

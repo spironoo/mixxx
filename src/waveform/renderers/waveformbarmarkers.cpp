@@ -9,6 +9,7 @@ void WaveformBarMarkers::update(const QString& group, const mixxx::Beats& beats)
         const WaveformWidgetFactory* pFactory = WaveformWidgetFactory::instance();
         m_showBars = pFactory->showBarMarkers();
         m_showPhrases = pFactory->showPhraseMarkers();
+        m_shape = pFactory->barMarkerShape();
     }
 
     // The downbeat is also needed without markers, to thin out dense beat
@@ -76,6 +77,26 @@ float WaveformBarMarkers::markOpacity(Type type, float beatSpacing) {
         break;
     }
     return 0.f;
+}
+
+// static
+WaveformBarMarkers::TriangleMark WaveformBarMarkers::triangleMark(
+        Type type, float breadth, float outlineWidth) {
+    // Equilateral triangles have a 60 degree angle at the tip, so each side
+    // is 30 degrees off the vertical.
+    constexpr float kSin30 = 0.5f;
+    constexpr float kCos30 = 0.8660254f;
+    constexpr float kTan30 = kSin30 / kCos30;
+    const float length = markLength(type, breadth);
+    const float halfWidth = length * kTan30;
+    // Moving the sides outwards by outlineWidth moves them sideways by
+    // outlineWidth / cos(30) and the tip by outlineWidth / sin(30).
+    return TriangleMark{
+            halfWidth,
+            length,
+            halfWidth + outlineWidth / kCos30,
+            length + outlineWidth / kSin30,
+    };
 }
 
 // static
