@@ -10,6 +10,7 @@ void WaveformBarMarkers::update(const QString& group, const mixxx::Beats& beats)
         m_showBars = pFactory->showBarMarkers();
         m_showPhrases = pFactory->showPhraseMarkers();
         m_shape = pFactory->barMarkerShape();
+        m_scale = pFactory->barMarkerSize() / 100.f;
     }
 
     // The downbeat is also needed without markers, to thin out dense beat
@@ -62,32 +63,29 @@ float WaveformBarMarkers::lineOpacity(int beatIndex, float beatSpacing) const {
     return fade(spacing, kLineHiddenSpacing, kLineFullSpacing);
 }
 
-// static
-float WaveformBarMarkers::markOpacity(Type type, float beatSpacing) {
+float WaveformBarMarkers::markOpacity(Type type, float beatSpacing) const {
+    const float scale = m_shape == BarMarkerShape::Triangle ? triangleScale() : m_scale;
+    const float hiddenSpacing = scale * kMarkHiddenSpacing;
+    const float fullSpacing = scale * kMarkFullSpacing;
     switch (type) {
     case Type::Phrase:
-        return fade(beatSpacing * mixxx::bars::kBeatsPerPhrase,
-                kMarkHiddenSpacing,
-                kMarkFullSpacing);
+        return fade(beatSpacing * mixxx::bars::kBeatsPerPhrase, hiddenSpacing, fullSpacing);
     case Type::Bar:
-        return fade(beatSpacing * mixxx::bars::kBeatsPerBar,
-                kMarkHiddenSpacing,
-                kMarkFullSpacing);
+        return fade(beatSpacing * mixxx::bars::kBeatsPerBar, hiddenSpacing, fullSpacing);
     case Type::Beat:
         break;
     }
     return 0.f;
 }
 
-// static
 WaveformBarMarkers::TriangleMark WaveformBarMarkers::triangleMark(
-        Type type, float breadth, float outlineWidth) {
+        Type type, float breadth, float outlineWidth) const {
     // Equilateral triangles have a 60 degree angle at the tip, so each side
     // is 30 degrees off the vertical.
     constexpr float kSin30 = 0.5f;
     constexpr float kCos30 = 0.8660254f;
     constexpr float kTan30 = kSin30 / kCos30;
-    const float length = markLength(type, breadth);
+    const float length = markLengthAtScale(type, breadth, triangleScale());
     const float halfWidth = length * kTan30;
     // Moving the sides outwards by outlineWidth moves them sideways by
     // outlineWidth / cos(30) and the tip by outlineWidth / sin(30).

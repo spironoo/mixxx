@@ -260,6 +260,14 @@ class WaveformWidgetFactory : public QObject,
     BarMarkerShape barMarkerShape() const {
         return m_barMarkerShape;
     }
+    /// Size of the bar and phrase marks in percent of their default size
+    static constexpr int kBarMarkerSizeMin = 50;
+    static constexpr int kBarMarkerSizeMax = 300;
+    static constexpr int kBarMarkerSizeDefault = 100;
+    void setBarMarkerSize(int percent);
+    int barMarkerSize() const {
+        return m_barMarkerSize;
+    }
 
     void setVisualGain(BandIndex index, double gain);
     double getVisualGain(BandIndex index) const;
@@ -412,6 +420,7 @@ class WaveformWidgetFactory : public QObject,
     bool m_showBarMarkers;
     bool m_showPhraseMarkers;
     BarMarkerShape m_barMarkerShape;
+    int m_barMarkerSize;
 
     VSyncThread* m_vsyncThread;
     GuiTick* m_pGuiTick;  // not owned

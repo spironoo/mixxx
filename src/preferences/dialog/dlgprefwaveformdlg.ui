@@ -317,13 +317,70 @@ Select from different types of displays for the waveform, which differ primarily
       </layout>
      </item>
      <item row="8" column="0">
+      <widget class="QLabel" name="barMarkerSizeLabel">
+       <property name="text">
+        <string>Bar and phrase mark size</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+       <property name="buddy">
+        <cstring>barMarkerSizeSlider</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1" colspan="3">
+      <widget class="QSlider" name="barMarkerSizeSlider">
+       <property name="minimum">
+        <number>50</number>
+       </property>
+       <property name="maximum">
+        <number>300</number>
+       </property>
+       <property name="singleStep">
+        <number>10</number>
+       </property>
+       <property name="pageStep">
+        <number>50</number>
+       </property>
+       <property name="value">
+        <number>100</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="4">
+      <widget class="QSpinBox" name="barMarkerSizeSpinBox">
+       <property name="toolTip">
+        <string>Size of the bar and phrase marks at the edges of the waveform, relative to their default size.</string>
+       </property>
+       <property name="suffix">
+        <string>%</string>
+       </property>
+       <property name="minimum">
+        <number>50</number>
+       </property>
+       <property name="maximum">
+        <number>300</number>
+       </property>
+       <property name="singleStep">
+        <number>10</number>
+       </property>
+       <property name="value">
+        <number>100</number>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
       <widget class="QLabel" name="playMarkerPositionLabel">
        <property name="text">
         <string>Play marker position</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="1" colspan="4">
+     <item row="9" column="1" colspan="4">
       <widget class="QSlider" name="playMarkerPositionSlider">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -355,7 +412,7 @@ Select from different types of displays for the waveform, which differ primarily
       </widget>
      </item>
 
-     <item row="9" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="defaultZoomLabel">
        <property name="text">
         <string extracomment="Waveform zoom">Default zoom level</string>
@@ -368,7 +425,7 @@ Select from different types of displays for the waveform, which differ primarily
        </property>
       </widget>
      </item>
-     <item row="9" column="1" colspan="4">
+     <item row="10" column="1" colspan="4">
       <widget class="QDoubleSpinBox" name="defaultZoomSpinBox">
        <property name="toolTip">
         <string>The zoom level of newly loaded waveforms. 100 % shows one waveform sample per pixel, smaller values zoom out.</string>
@@ -385,7 +442,7 @@ Select from different types of displays for the waveform, which differ primarily
       </widget>
      </item>
 
-     <item row="10" column="0">
+     <item row="11" column="0">
       <widget class="QLabel" name="zoomRangeLabel">
        <property name="text">
         <string extracomment="Waveform zoom">Zoom range</string>
@@ -398,7 +455,7 @@ Select from different types of displays for the waveform, which differ primarily
        </property>
       </widget>
      </item>
-     <item row="10" column="1" colspan="4">
+     <item row="11" column="1" colspan="4">
       <layout class="QHBoxLayout" name="zoomRangeLayout">
        <item>
         <widget class="QLabel" name="zoomRangeMinLabel">
@@ -462,7 +519,7 @@ Select from different types of displays for the waveform, which differ primarily
       </layout>
      </item>
 
-     <item row="11" column="1" colspan="4">
+     <item row="12" column="1" colspan="4">
       <widget class="QCheckBox" name="synchronizeZoomCheckBox">
        <property name="toolTip">
         <string>Synchronize zoom level across all waveform displays.</string>
@@ -473,7 +530,7 @@ Select from different types of displays for the waveform, which differ primarily
       </widget>
      </item>
 
-     <item row="12" column="0">
+     <item row="13" column="0">
       <widget class="QLabel" name="visualGainLabel">
        <property name="text">
         <string>Visual gain</string>
@@ -486,7 +543,7 @@ Select from different types of displays for the waveform, which differ primarily
        </property>
       </widget>
      </item>
-     <item row="12" column="1" colspan="4">
+     <item row="13" column="1" colspan="4">
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0">
         <widget class="QLabel" name="visualGainLabel_global">
@@ -620,7 +677,7 @@ Select from different types of displays for the waveform, which differ primarily
       </layout>
      </item>
 
-     <item row="13" column="0">
+     <item row="14" column="0">
       <widget class="QLabel" name="marker_hints_label">
        <property name="text">
         <string>Play marker hints</string>
@@ -630,14 +687,14 @@ Select from different types of displays for the waveform, which differ primarily
        </property>
       </widget>
      </item>
-     <item row="13" column="1" colspan="2">
+     <item row="14" column="1" colspan="2">
       <widget class="QCheckBox" name="untilMarkShowBeatsCheckBox">
        <property name="text">
         <string>Beats until next marker</string>
        </property>
       </widget>
      </item>
-     <item row="13" column="3" colspan="2">
+     <item row="14" column="3" colspan="2">
       <widget class="QCheckBox" name="untilMarkShowTimeCheckBox">
        <property name="text">
         <string>Time until next marker</string>
@@ -645,7 +702,7 @@ Select from different types of displays for the waveform, which differ primarily
       </widget>
      </item>
 
-     <item row="14" column="1" colspan="4">
+     <item row="15" column="1" colspan="4">
       <layout class="QHBoxLayout" name="marker_option_layout">
        <item>
         <layout class="QVBoxLayout" name="marker_options_placement_layout">
@@ -729,7 +786,7 @@ Select from different types of displays for the waveform, which differ primarily
       </layout><!-- marker_option_layout -->
      </item>
 
-     <item row="15" column="1" colspan="4">
+     <item row="16" column="1" colspan="4">
       <widget class="QLabel" name="requiresGLSLLabel">
        <property name="text">
         <string>This functionality requires waveform acceleration.</string>
@@ -740,7 +797,7 @@ Select from different types of displays for the waveform, which differ primarily
       </widget>
      </item>
 
-     <item row="16" column="0">
+     <item row="17" column="0">
       <widget class="QLabel" name="stemOpacityLabel">
        <property name="text">
         <string>Stem</string>
@@ -753,7 +810,7 @@ Select from different types of displays for the waveform, which differ primarily
        </property>
       </widget>
      </item>
-     <item row="16" column="1" colspan="4">
+     <item row="17" column="1" colspan="4">
       <layout class="QGridLayout" name="stemOpacityGridLayout">
        <item row="0" column="0">
         <widget class="QLabel" name="stemOpacityMainLabel">
@@ -850,7 +907,7 @@ Select from different types of displays for the waveform, which differ primarily
       </layout>
      </item>
 
-     <item row="17" column="1" colspan="4">
+     <item row="18" column="1" colspan="4">
       <widget class="QLabel" name="requiresGLSLLabel2">
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -1068,6 +1125,8 @@ Select from different types of displays for the waveform overview, which differ 
   <tabstop>showBarMarkersCheckBox</tabstop>
   <tabstop>showPhraseMarkersCheckBox</tabstop>
   <tabstop>barMarkerShapeComboBox</tabstop>
+  <tabstop>barMarkerSizeSlider</tabstop>
+  <tabstop>barMarkerSizeSpinBox</tabstop>
   <tabstop>playMarkerPositionSlider</tabstop>
   <tabstop>defaultZoomSpinBox</tabstop>
   <tabstop>zoomRangeMinSpinBox</tabstop>

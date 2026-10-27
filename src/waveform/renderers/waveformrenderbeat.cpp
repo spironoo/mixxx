@@ -104,9 +104,8 @@ void WaveformRenderBeat::draw(QPainter* painter, QPaintEvent* /*event*/) {
     const float rendererWidth = m_waveformRenderer->getWidth();
     const float rendererHeight = m_waveformRenderer->getHeight();
     const float breadth = orientation == Qt::Horizontal ? rendererHeight : rendererWidth;
-    const double markWidth = WaveformBarMarkers::kMarkWidthFactor * beatLineWidth;
-
     m_barMarkers.update(m_waveformRenderer->getGroup(), *trackBeats);
+    const double markWidth = m_barMarkers.rectangleMarkWidth(static_cast<float>(beatLineWidth));
 
     // When zoomed out, the lines and marks of beats that are too close to
     // each other are hidden. Unlike the allshader renderer, this renderer
@@ -166,11 +165,11 @@ void WaveformRenderBeat::draw(QPainter* painter, QPaintEvent* /*event*/) {
         const WaveformBarMarkers::Type type = m_barMarkers.isEnabled()
                 ? m_barMarkers.typeOf(beatIndex)
                 : WaveformBarMarkers::Type::Beat;
-        if (WaveformBarMarkers::markOpacity(type, beatSpacing) < kMinOpacity) {
+        if (m_barMarkers.markOpacity(type, beatSpacing) < kMinOpacity) {
             continue;
         }
         if (triangleMarks) {
-            const auto mark = WaveformBarMarkers::triangleMark(
+            const auto mark = m_barMarkers.triangleMark(
                     type, breadth, static_cast<float>(outlineWidth));
             for (const auto [edge, sign] : {std::pair{0.0, 1.0}, std::pair{double{breadth}, -1.0}}) {
                 m_triangleMarkOutlines.append(triangle(
@@ -180,7 +179,7 @@ void WaveformRenderBeat::draw(QPainter* painter, QPaintEvent* /*event*/) {
             }
             continue;
         }
-        const double markLength = WaveformBarMarkers::markLength(type, breadth);
+        const double markLength = m_barMarkers.markLength(type, breadth);
         const double markStart = xBeatPoint - markWidth / 2;
         if (orientation == Qt::Horizontal) {
             m_marks.append(QRectF(markStart, 0.0, markWidth, markLength));
