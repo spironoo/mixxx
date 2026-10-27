@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iterator>
 #include <limits>
+#include <utility>
 
 #include "track/track.h"
 #include "util/painterscope.h"
@@ -125,8 +126,26 @@ void WaveformRenderBeat::draw(QPainter* painter, QPaintEvent* /*event*/) {
     // done for the first beat.
     int beatIndex = m_barMarkers.needsBeatIndices(beatSpacing) ? trackBeats->beatIndexOf(it) : 0;
 
+    const bool triangleMarks = m_barMarkers.shape() == BarMarkerShape::Triangle;
+    const double outlineWidth = WaveformBarMarkers::kMarkOutlineWidthFactor * beatLineWidth;
+    // Maps a position along the waveform and a distance from its top (or
+    // left) edge to a point on the screen.
+    auto toPoint = [orientation](double along, double across) {
+        return orientation == Qt::Horizontal ? QPointF(along, across)
+                                             : QPointF(across, along);
+    };
+    // A triangle with its base on the edge at `edge`, pointing towards the
+    // center of the waveform, which is in the direction of `sign`.
+    auto triangle = [&](double center, double edge, double sign, double halfWidth, double length) {
+        return QPolygonF({toPoint(center - halfWidth, edge),
+                toPoint(center + halfWidth, edge),
+                toPoint(center, edge + sign * length)});
+    };
+
     m_beats.clear();
     m_marks.clear();
+    m_triangleMarks.clear();
+    m_triangleMarkOutlines.clear();
     for (; it != trackBeats->cend() && *it <= endPosition; ++it, ++beatIndex) {
         double beatPosition = it->toEngineSamplePos();
         double xBeatPoint =
@@ -150,6 +169,17 @@ void WaveformRenderBeat::draw(QPainter* painter, QPaintEvent* /*event*/) {
         if (WaveformBarMarkers::markOpacity(type, beatSpacing) < kMinOpacity) {
             continue;
         }
+        if (triangleMarks) {
+            const auto mark = WaveformBarMarkers::triangleMark(
+                    type, breadth, static_cast<float>(outlineWidth));
+            for (const auto [edge, sign] : {std::pair{0.0, 1.0}, std::pair{double{breadth}, -1.0}}) {
+                m_triangleMarkOutlines.append(triangle(
+                        xBeatPoint, edge, sign, mark.outlineHalfWidth, mark.outlineLength));
+                m_triangleMarks.append(
+                        triangle(xBeatPoint, edge, sign, mark.halfWidth, mark.length));
+            }
+            continue;
+        }
         const double markLength = WaveformBarMarkers::markLength(type, breadth);
         const double markStart = xBeatPoint - markWidth / 2;
         if (orientation == Qt::Horizontal) {
@@ -164,13 +194,23 @@ void WaveformRenderBeat::draw(QPainter* painter, QPaintEvent* /*event*/) {
     // Make sure to use constData to prevent detaches!
     painter->drawLines(m_beats.constData(), static_cast<int>(m_beats.size()));
 
+    // The outline keeps the marks visible on top of the waveform
+    QColor markOutlineColor = WaveformBarMarkers::markOutlineColor();
+    markOutlineColor.setAlphaF(m_beatColor.alphaF());
+    if (!m_triangleMarks.isEmpty()) {
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(markOutlineColor);
+        for (const QPolygonF& outline : std::as_const(m_triangleMarkOutlines)) {
+            painter->drawPolygon(outline);
+        }
+        painter->setBrush(m_barColor);
+        for (const QPolygonF& mark : std::as_const(m_triangleMarks)) {
+            painter->drawPolygon(mark);
+        }
+    }
     if (!m_marks.isEmpty()) {
         painter->setPen(Qt::NoPen);
-        // The outline keeps the marks visible on top of the waveform
-        QColor markOutlineColor = WaveformBarMarkers::markOutlineColor();
-        markOutlineColor.setAlphaF(m_beatColor.alphaF());
         painter->setBrush(markOutlineColor);
-        const qreal outlineWidth = WaveformBarMarkers::kMarkOutlineWidthFactor * beatLineWidth;
         for (const QRectF& mark : std::as_const(m_marks)) {
             painter->drawRect(mark.adjusted(
                     -outlineWidth, -outlineWidth, outlineWidth, outlineWidth));

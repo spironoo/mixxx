@@ -8,6 +8,7 @@
 
 #include "control/pollingcontrolproxy.h"
 #include "track/beats.h"
+#include "waveform/renderers/barmarkershape.h"
 
 /// Shared logic for the beat renderers to highlight the first beat of each
 /// bar and of each phrase.
@@ -18,7 +19,8 @@
 /// with longer marks.
 ///
 /// Unlike in rekordbox, the waveform reaches the edges, so the marks get a
-/// dark outline to stay visible on top of it.
+/// dark outline to stay visible on top of it. Instead of the narrow
+/// rectangles, the marks can also be drawn as triangles, see BarMarkerShape.
 ///
 /// When the waveform is zoomed out so far that the beats get too close to
 /// each other, the beat lines would cover the waveform. The lines then fade
@@ -62,12 +64,33 @@ class WaveformBarMarkers {
         return 0.f;
     }
 
+    /// A triangle mark at the top edge of a horizontal waveform. The base is
+    /// on the edge and centered on the beat line, the tip points towards the
+    /// center of the waveform. The outline is a larger triangle behind it.
+    struct TriangleMark {
+        /// Half the width of the base
+        float halfWidth;
+        /// Distance of the tip from the edge
+        float length;
+        float outlineHalfWidth;
+        float outlineLength;
+    };
+
+    /// Returns the size of a triangle mark of type `type`, with an outline
+    /// that is `outlineWidth` wide on all sides. The triangles are as long
+    /// as the rectangle marks and equilateral.
+    static TriangleMark triangleMark(Type type, float breadth, float outlineWidth);
+
     /// Reads the current preferences. Must be called once per frame before
     /// using `typeOf()`.
     void update(const QString& group, const mixxx::Beats& beats);
 
     bool isEnabled() const {
         return m_showBars || m_showPhrases;
+    }
+
+    BarMarkerShape shape() const {
+        return m_shape;
     }
 
     /// Returns how the beat with index `beatIndex` should be drawn.
@@ -102,5 +125,6 @@ class WaveformBarMarkers {
     std::optional<PollingControlProxy> m_pIntroStartPosition;
     bool m_showBars = true;
     bool m_showPhrases = true;
+    BarMarkerShape m_shape = BarMarkerShape::Rectangle;
     int m_downbeatIndex = 0;
 };

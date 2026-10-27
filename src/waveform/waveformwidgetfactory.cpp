@@ -97,6 +97,8 @@ const ConfigKey kBeatGridAlpha = ConfigKey(kWaveformGroup, QStringLiteral("beatG
 const ConfigKey kShowBarMarkersKey = ConfigKey(kWaveformGroup, QStringLiteral("ShowBarMarkers"));
 const ConfigKey kShowPhraseMarkersKey =
         ConfigKey(kWaveformGroup, QStringLiteral("ShowPhraseMarkers"));
+const ConfigKey kBarMarkerShapeKey =
+        ConfigKey(kWaveformGroup, QStringLiteral("BarMarkerShape"));
 
 ConfigKey visualGainKey(int index) {
     return ConfigKey(kWaveformGroup, QStringLiteral("VisualGain_") + QString::number(index));
@@ -155,6 +157,7 @@ WaveformWidgetFactory::WaveformWidgetFactory()
           m_beatGridAlpha(90),
           m_showBarMarkers(true),
           m_showPhraseMarkers(true),
+          m_barMarkerShape(BarMarkerShape::Rectangle),
           m_vsyncThread(nullptr),
           m_pGuiTick(nullptr),
           m_pVisualsManager(nullptr),
@@ -440,6 +443,10 @@ bool WaveformWidgetFactory::setConfig(UserSettingsPointer config) {
 
     setShowBarMarkers(m_config->getValue(kShowBarMarkersKey, m_showBarMarkers));
     setShowPhraseMarkers(m_config->getValue(kShowPhraseMarkersKey, m_showPhraseMarkers));
+    setBarMarkerShape(m_config->getValue(kBarMarkerShapeKey, 0) ==
+                            static_cast<int>(BarMarkerShape::Triangle)
+                    ? BarMarkerShape::Triangle
+                    : BarMarkerShape::Rectangle);
 
     WaveformWidgetType::Type type = static_cast<WaveformWidgetType::Type>(
             m_config->getValueString(kWaveformTypeKey).toInt(&ok));
@@ -846,6 +853,13 @@ void WaveformWidgetFactory::setShowPhraseMarkers(bool show) {
     m_showPhraseMarkers = show;
     if (m_config) {
         m_config->setValue(kShowPhraseMarkersKey, show);
+    }
+}
+
+void WaveformWidgetFactory::setBarMarkerShape(BarMarkerShape shape) {
+    m_barMarkerShape = shape;
+    if (m_config) {
+        m_config->setValue(kBarMarkerShapeKey, static_cast<int>(shape));
     }
 }
 

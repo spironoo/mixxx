@@ -285,6 +285,23 @@ Select from different types of displays for the waveform, which differ primarily
         </widget>
        </item>
        <item>
+        <widget class="QLabel" name="barMarkerShapeLabel">
+         <property name="text">
+          <string extracomment="Shape of the bar and phrase marks">Marks</string>
+         </property>
+         <property name="buddy">
+          <cstring>barMarkerShapeComboBox</cstring>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="barMarkerShapeComboBox">
+         <property name="toolTip">
+          <string>Shape of the marks at the edges of the waveform. Triangles are easier to see.</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="bar_marker_options_spacer">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -1050,6 +1067,7 @@ Select from different types of displays for the waveform overview, which differ 
   <tabstop>beatGridAlphaSpinBox</tabstop>
   <tabstop>showBarMarkersCheckBox</tabstop>
   <tabstop>showPhraseMarkersCheckBox</tabstop>
+  <tabstop>barMarkerShapeComboBox</tabstop>
   <tabstop>playMarkerPositionSlider</tabstop>
   <tabstop>defaultZoomSpinBox</tabstop>
   <tabstop>zoomRangeMinSpinBox</tabstop>

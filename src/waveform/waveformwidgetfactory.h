@@ -11,6 +11,7 @@
 #include "util/performancetimer.h"
 #include "util/singleton.h"
 #include "waveform/renderers/allshader/waveformrenderersignalbase.h"
+#include "waveform/renderers/barmarkershape.h"
 #include "waveform/renderers/waveformrenderersignalbase.h"
 #include "waveform/widgets/waveformwidgettype.h"
 #include "waveform/widgets/waveformwidgetvars.h"
@@ -254,6 +255,11 @@ class WaveformWidgetFactory : public QObject,
     bool showPhraseMarkers() const {
         return m_showPhraseMarkers;
     }
+    /// Shape of the bar and phrase marks
+    void setBarMarkerShape(BarMarkerShape shape);
+    BarMarkerShape barMarkerShape() const {
+        return m_barMarkerShape;
+    }
 
     void setVisualGain(BandIndex index, double gain);
     double getVisualGain(BandIndex index) const;
@@ -405,6 +411,7 @@ class WaveformWidgetFactory : public QObject,
     int m_beatGridAlpha;
     bool m_showBarMarkers;
     bool m_showPhraseMarkers;
+    BarMarkerShape m_barMarkerShape;
 
     VSyncThread* m_vsyncThread;
     GuiTick* m_pGuiTick;  // not owned
