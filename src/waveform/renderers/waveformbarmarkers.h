@@ -35,7 +35,8 @@ class WaveformBarMarkers {
         Phrase,
     };
 
-    /// Width of the marks relative to the beat line width
+    /// Width of the rectangle marks relative to the beat line width, at a
+    /// scale of 1
     static constexpr float kMarkWidthFactor = 5.f;
     /// Width of the dark outline around the marks relative to the beat line
     /// width
@@ -45,14 +46,28 @@ class WaveformBarMarkers {
     /// they are hidden.
     static constexpr float kLineFullSpacing = 11.f;
     static constexpr float kLineHiddenSpacing = 4.4f;
-    /// Same for the marks, which are wider than the lines.
+    /// Same for the marks at a scale of 1, which are wider than the lines.
+    /// Larger marks fade out earlier.
     static constexpr float kMarkFullSpacing = 30.8f;
     static constexpr float kMarkHiddenSpacing = 15.4f;
 
+    /// Size of the marks relative to their default size, see setScale()
+    float scale() const {
+        return m_scale;
+    }
+    /// Sets the size of the marks relative to their default size. update()
+    /// sets it from the preferences.
+    void setScale(float scale) {
+        m_scale = scale;
+    }
+
     /// Length of the marks at each edge of the waveform, measured from the
-    /// edge. `breadth` is the height of a horizontal waveform.
-    static float markLength(Type type, float breadth) {
-        const float barMarkLength = std::clamp(std::round(breadth / 8.f), 4.f, 14.f);
+    /// edge. `breadth` is the height of a horizontal waveform. The marks
+    /// never reach past the center of the waveform.
+    float markLength(Type type, float breadth) const {
+        const float barMarkLength = std::min(
+                std::round(m_scale * std::clamp(std::round(breadth / 8.f), 4.f, 14.f)),
+                breadth / 2.f);
         switch (type) {
         case Type::Phrase:
             return std::min(std::round(1.6f * barMarkLength), breadth / 2.f);
@@ -62,6 +77,11 @@ class WaveformBarMarkers {
             break;
         }
         return 0.f;
+    }
+
+    /// Width of the rectangle marks in whole multiples of `beatLineWidth`
+    float rectangleMarkWidth(float beatLineWidth) const {
+        return std::max(1.f, std::round(m_scale * kMarkWidthFactor)) * beatLineWidth;
     }
 
     /// A triangle mark at the top edge of a horizontal waveform. The base is
@@ -79,7 +99,7 @@ class WaveformBarMarkers {
     /// Returns the size of a triangle mark of type `type`, with an outline
     /// that is `outlineWidth` wide on all sides. The triangles are as long
     /// as the rectangle marks and equilateral.
-    static TriangleMark triangleMark(Type type, float breadth, float outlineWidth);
+    TriangleMark triangleMark(Type type, float breadth, float outlineWidth) const;
 
     /// Reads the current preferences. Must be called once per frame before
     /// using `typeOf()`.
@@ -111,7 +131,7 @@ class WaveformBarMarkers {
 
     /// Opacity from 0 to 1 of the marks of a beat of type `type`, when beats
     /// are `beatSpacing` pixels apart.
-    static float markOpacity(Type type, float beatSpacing);
+    float markOpacity(Type type, float beatSpacing) const;
 
     /// Default color for skins that don't define a BarColor
     static QColor defaultBarColor();
@@ -126,5 +146,6 @@ class WaveformBarMarkers {
     bool m_showBars = true;
     bool m_showPhrases = true;
     BarMarkerShape m_shape = BarMarkerShape::Rectangle;
+    float m_scale = 1.f;
     int m_downbeatIndex = 0;
 };

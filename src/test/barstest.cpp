@@ -115,16 +115,49 @@ TEST(BarsTest, LinesFadeOutByBarsAndPhrases) {
 TEST(BarsTest, MarksFadeOutByBarsAndPhrases) {
     using Markers = WaveformBarMarkers;
     using Type = Markers::Type;
-    EXPECT_FLOAT_EQ(0.f, Markers::markOpacity(Type::Beat, 100.f));
+    const Markers markers;
+    EXPECT_FLOAT_EQ(0.f, markers.markOpacity(Type::Beat, 100.f));
 
     const float barsFull = Markers::kMarkFullSpacing / 4;
-    EXPECT_FLOAT_EQ(1.f, Markers::markOpacity(Type::Bar, barsFull));
-    EXPECT_FLOAT_EQ(1.f, Markers::markOpacity(Type::Phrase, barsFull));
+    EXPECT_FLOAT_EQ(1.f, markers.markOpacity(Type::Bar, barsFull));
+    EXPECT_FLOAT_EQ(1.f, markers.markOpacity(Type::Phrase, barsFull));
 
     const float barsHidden = Markers::kMarkHiddenSpacing / 4;
-    EXPECT_FLOAT_EQ(0.f, Markers::markOpacity(Type::Bar, barsHidden));
-    EXPECT_FLOAT_EQ(1.f, Markers::markOpacity(Type::Phrase, barsHidden));
-    EXPECT_FLOAT_EQ(0.f, Markers::markOpacity(Type::Phrase, Markers::kMarkHiddenSpacing / 16));
+    EXPECT_FLOAT_EQ(0.f, markers.markOpacity(Type::Bar, barsHidden));
+    EXPECT_FLOAT_EQ(1.f, markers.markOpacity(Type::Phrase, barsHidden));
+    EXPECT_FLOAT_EQ(0.f, markers.markOpacity(Type::Phrase, Markers::kMarkHiddenSpacing / 16));
+}
+
+TEST(BarsTest, MarkScale) {
+    using Markers = WaveformBarMarkers;
+    using Type = Markers::Type;
+    constexpr float kBreadth = 96.f;
+    Markers markers;
+    const float barLength = markers.markLength(Type::Bar, kBreadth);
+    const float barWidth = markers.rectangleMarkWidth(1.f);
+    const float barTriangleWidth = markers.triangleMark(Type::Bar, kBreadth, 1.f).halfWidth;
+    EXPECT_FLOAT_EQ(Markers::kMarkWidthFactor, barWidth);
+
+    // Twice as large marks are twice as long and wide.
+    markers.setScale(2.f);
+    EXPECT_FLOAT_EQ(2 * barLength, markers.markLength(Type::Bar, kBreadth));
+    EXPECT_FLOAT_EQ(2 * barWidth, markers.rectangleMarkWidth(1.f));
+    EXPECT_FLOAT_EQ(2 * barTriangleWidth,
+            markers.triangleMark(Type::Bar, kBreadth, 1.f).halfWidth);
+
+    // They also fade out earlier, before they run into each other.
+    const float barsFull = Markers::kMarkFullSpacing / 4;
+    EXPECT_LT(markers.markOpacity(Type::Bar, barsFull), 1.f);
+    EXPECT_FLOAT_EQ(1.f, markers.markOpacity(Type::Bar, 2 * barsFull));
+
+    // The marks at both edges never overlap.
+    markers.setScale(3.f);
+    EXPECT_LE(markers.markLength(Type::Bar, kBreadth), kBreadth / 2);
+    EXPECT_FLOAT_EQ(kBreadth / 2, markers.markLength(Type::Phrase, kBreadth));
+
+    // Small marks are at least one beat line wide.
+    markers.setScale(0.1f);
+    EXPECT_FLOAT_EQ(1.f, markers.rectangleMarkWidth(1.f));
 }
 
 TEST(BarsTest, TriangleMarks) {
@@ -135,8 +168,9 @@ TEST(BarsTest, TriangleMarks) {
 
     // The triangles are as long as the rectangle marks and equilateral, so
     // all sides are as long as the base.
-    const auto bar = Markers::triangleMark(Type::Bar, kBreadth, kOutlineWidth);
-    EXPECT_FLOAT_EQ(Markers::markLength(Type::Bar, kBreadth), bar.length);
+    const Markers markers;
+    const auto bar = markers.triangleMark(Type::Bar, kBreadth, kOutlineWidth);
+    EXPECT_FLOAT_EQ(markers.markLength(Type::Bar, kBreadth), bar.length);
     const float barSide = std::hypot(bar.halfWidth, bar.length);
     EXPECT_NEAR(2 * bar.halfWidth, barSide, 1e-4f);
 
@@ -147,8 +181,8 @@ TEST(BarsTest, TriangleMarks) {
             1e-4f);
 
     // Phrase marks are larger.
-    const auto phrase = Markers::triangleMark(Type::Phrase, kBreadth, kOutlineWidth);
-    EXPECT_FLOAT_EQ(Markers::markLength(Type::Phrase, kBreadth), phrase.length);
+    const auto phrase = markers.triangleMark(Type::Phrase, kBreadth, kOutlineWidth);
+    EXPECT_FLOAT_EQ(markers.markLength(Type::Phrase, kBreadth), phrase.length);
     EXPECT_GT(phrase.halfWidth, bar.halfWidth);
 }
 

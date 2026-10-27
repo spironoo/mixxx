@@ -164,7 +164,7 @@ bool WaveformRenderBeat::preprocessInner() {
         return thinOutLines ? m_barMarkers.lineOpacity(beatIndex, beatSpacing) : 1.f;
     };
     auto markOpacity = [&](int beatIndex) {
-        return WaveformBarMarkers::markOpacity(markerType(beatIndex), beatSpacing);
+        return m_barMarkers.markOpacity(markerType(beatIndex), beatSpacing);
     };
     auto withOpacity = [](QVector4D rgba, float opacity) {
         rgba.setW(rgba.w() * opacity);
@@ -206,7 +206,7 @@ bool WaveformRenderBeat::preprocessInner() {
     const float boxBreadth = splitStemTracks
             ? rendererBreadth / static_cast<float>(mixxx::kMaxSupportedStems)
             : rendererBreadth;
-    constexpr float markWidth = WaveformBarMarkers::kMarkWidthFactor;
+    const float markWidth = m_barMarkers.rectangleMarkWidth(1.f);
     constexpr float markOutlineWidth = WaveformBarMarkers::kMarkOutlineWidthFactor;
 
     beatIndex = firstBeatIndex;
@@ -245,8 +245,7 @@ bool WaveformRenderBeat::preprocessInner() {
             // line is 1 pixel wide, so its center is half a pixel to the
             // right of x1.
             const float centerX = x1 + 0.5f;
-            const auto triangle = WaveformBarMarkers::triangleMark(
-                    type, markBreadth, markOutlineWidth);
+            const auto triangle = m_barMarkers.triangleMark(type, markBreadth, markOutlineWidth);
             vertexUpdater.addTriangle({centerX - triangle.outlineHalfWidth, 0.f},
                     {centerX + triangle.outlineHalfWidth, 0.f},
                     {centerX, triangle.outlineLength},
@@ -271,7 +270,7 @@ bool WaveformRenderBeat::preprocessInner() {
         // Center the marks on the beat line and keep them on whole pixels
         const float markX1 = x1 - std::floor((markWidth - 1.f) / 2.f);
         const float markX2 = markX1 + markWidth;
-        const float markLength = WaveformBarMarkers::markLength(type, markBreadth);
+        const float markLength = m_barMarkers.markLength(type, markBreadth);
         vertexUpdater.addRectangle({markX1 - markOutlineWidth, 0.f},
                 {markX2 + markOutlineWidth, markLength + markOutlineWidth},
                 outlineRgba);

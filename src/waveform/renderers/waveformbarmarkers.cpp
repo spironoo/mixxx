@@ -10,6 +10,7 @@ void WaveformBarMarkers::update(const QString& group, const mixxx::Beats& beats)
         m_showBars = pFactory->showBarMarkers();
         m_showPhrases = pFactory->showPhraseMarkers();
         m_shape = pFactory->barMarkerShape();
+        m_scale = pFactory->barMarkerSize() / 100.f;
     }
 
     // The downbeat is also needed without markers, to thin out dense beat
@@ -62,26 +63,22 @@ float WaveformBarMarkers::lineOpacity(int beatIndex, float beatSpacing) const {
     return fade(spacing, kLineHiddenSpacing, kLineFullSpacing);
 }
 
-// static
-float WaveformBarMarkers::markOpacity(Type type, float beatSpacing) {
+float WaveformBarMarkers::markOpacity(Type type, float beatSpacing) const {
+    const float hiddenSpacing = m_scale * kMarkHiddenSpacing;
+    const float fullSpacing = m_scale * kMarkFullSpacing;
     switch (type) {
     case Type::Phrase:
-        return fade(beatSpacing * mixxx::bars::kBeatsPerPhrase,
-                kMarkHiddenSpacing,
-                kMarkFullSpacing);
+        return fade(beatSpacing * mixxx::bars::kBeatsPerPhrase, hiddenSpacing, fullSpacing);
     case Type::Bar:
-        return fade(beatSpacing * mixxx::bars::kBeatsPerBar,
-                kMarkHiddenSpacing,
-                kMarkFullSpacing);
+        return fade(beatSpacing * mixxx::bars::kBeatsPerBar, hiddenSpacing, fullSpacing);
     case Type::Beat:
         break;
     }
     return 0.f;
 }
 
-// static
 WaveformBarMarkers::TriangleMark WaveformBarMarkers::triangleMark(
-        Type type, float breadth, float outlineWidth) {
+        Type type, float breadth, float outlineWidth) const {
     // Equilateral triangles have a 60 degree angle at the tip, so each side
     // is 30 degrees off the vertical.
     constexpr float kSin30 = 0.5f;
